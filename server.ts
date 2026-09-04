@@ -56,8 +56,8 @@ function loadDatabase(): StoredDatabase {
     console.error('Error loading database, resetting to initial seed:', err);
   }
 
-  // Default admin password: sampaforever123
-  const { hash, salt } = hashPassword('sampaforever123');
+  // Default admin password: Suman@305
+  const { hash, salt } = hashPassword('Suman@305');
   const defaultDb: StoredDatabase = {
     universe: JSON.parse(JSON.stringify(INITIAL_UNIVERSE)),
     secretRoom: JSON.parse(JSON.stringify(INITIAL_SECRET_ROOM)),

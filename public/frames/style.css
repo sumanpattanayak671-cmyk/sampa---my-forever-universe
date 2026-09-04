@@ -2131,3 +2131,394 @@ body {
   .footer-bottom { flex-direction: column; gap: 14px; text-align: center; }
   .hidden-mobile { display: none; }
 }
+
+/* ==========================================================================
+   ADMIN CONTROL PANEL STYLING
+   ========================================================================== */
+
+.admin-pill {
+  background: rgba(244, 63, 94, 0.12);
+  border-color: rgba(244, 63, 94, 0.35);
+  color: #fb7185;
+}
+
+.admin-pill:hover {
+  background: rgba(244, 63, 94, 0.22);
+  border-color: #fb7185;
+  color: #FFF;
+}
+
+.pulse-dot-admin {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f43f5e;
+  box-shadow: 0 0 8px #f43f5e;
+}
+
+.admin-modal-dialog {
+  max-width: 960px;
+  width: 95%;
+  height: 88vh;
+  display: flex;
+  flex-direction: column;
+  padding: 32px;
+  overflow: hidden;
+  position: relative;
+  border-radius: 32px;
+}
+
+.admin-view-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Login Gate */
+.admin-login-box {
+  max-width: 440px;
+  margin: auto;
+  text-align: center;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.admin-shield-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(222, 212, 193, 0.1);
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 24px rgba(222, 212, 193, 0.25);
+  margin-bottom: 4px;
+}
+
+.icon-lg {
+  width: 34px;
+  height: 34px;
+}
+
+.admin-login-title {
+  font-family: var(--font-serif);
+  font-size: 28px;
+  color: #FFF;
+}
+
+.admin-login-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.admin-login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Dashboard Header */
+.admin-dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.admin-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--accent-gold);
+  text-transform: uppercase;
+}
+
+.admin-dash-title {
+  font-family: var(--font-serif);
+  font-size: 24px;
+  color: #FFF;
+  margin-top: 2px;
+}
+
+.admin-header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 11px;
+}
+
+/* Tabs Navigation */
+.admin-tabs-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+
+.admin-tabs-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.admin-tab {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.admin-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFF;
+}
+
+.admin-tab.active {
+  background: #FFF;
+  color: #1A1A1A;
+  border-color: #FFF;
+  box-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
+}
+
+/* Tab Body */
+.admin-tab-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 4px 40px;
+}
+
+.admin-tab-pane {
+  display: none;
+  animation: fadeIn 0.2s ease;
+}
+
+.admin-tab-pane.active {
+  display: block;
+}
+
+/* Form Styles */
+.admin-form-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.admin-section-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: #FFF;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.admin-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.admin-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-gold);
+}
+
+.admin-input,
+.admin-textarea {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  color: #FFF;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.admin-input:focus,
+.admin-textarea:focus {
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 10px rgba(192, 132, 252, 0.3);
+}
+
+.admin-textarea {
+  min-height: 90px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* Direct File Upload Dropzone */
+.upload-dropzone {
+  border: 2px dashed rgba(192, 132, 252, 0.4);
+  background: rgba(192, 132, 252, 0.05);
+  border-radius: 20px;
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.upload-dropzone:hover,
+.upload-dropzone.dragover {
+  border-color: var(--accent-rose);
+  background: rgba(244, 63, 94, 0.08);
+}
+
+.upload-dropzone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.upload-dropzone-icon {
+  width: 44px;
+  height: 44px;
+  color: var(--accent-purple);
+  margin: 0 auto 10px;
+}
+
+.upload-dropzone-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #FFF;
+  margin-bottom: 4px;
+}
+
+.upload-dropzone-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Editable Item Cards */
+.admin-item-card {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  margin-bottom: 12px;
+  align-items: flex-start;
+}
+
+.admin-thumb-box {
+  width: 90px;
+  height: 90px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  flex-shrink: 0;
+  position: relative;
+  background: #000;
+}
+
+.admin-thumb-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-thumb-replace-btn {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.85);
+  color: #FFF;
+  font-size: 9px;
+  text-align: center;
+  padding: 3px 0;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.admin-item-fields {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-item-row {
+  display: flex;
+  gap: 10px;
+}
+
+.admin-delete-btn {
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: var(--accent-rose);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: all 0.2s ease;
+}
+
+.admin-delete-btn:hover {
+  background: var(--accent-rose);
+  color: #FFF;
+}
+
+.admin-feedback-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #10b981;
+  color: #FFF;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  animation: fadeIn 0.3s ease;
+}

@@ -459,10 +459,6 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
             </p>
           </div>
 
-          <div className="rounded-xl border border-[#DED4C1] bg-[#F5F2ED] p-3 text-[11px] text-[#6B5B4A] font-sans">
-            Initial default password: <span className="font-mono text-[#1A1A1A] font-semibold">sampaforever123</span>
-          </div>
-
           {loginError && (
             <div className="flex items-center gap-2 rounded-xl bg-[#FDF2F2] border border-[#F8D7DA] p-3 text-xs text-[#721C24] text-left font-sans">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />

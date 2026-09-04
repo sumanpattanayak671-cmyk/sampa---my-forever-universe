@@ -361,6 +361,6 @@
     ],
     "specialAudioUrl": "https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=romantic-piano-112199.mp3"
   },
-  "adminHash": "603a307961e8cf1ef3283fea88dfc205a4c2bbd04d5401322ce3f1e680cf77905bc32f2853855893a6358b38a5d35c02469ace929e68a7ad01e2ef645d54d0df",
-  "adminSalt": "77a94c91eb952eda821362fd558df43d"
+  "adminHash": "452fdd0e40724d65192afd5ab92f7260c5552d048995504ed9f33cbc5944b0b81ef6d755c61b7d34801d262e5aa641e9e92833624ad5e72124cb15c3c2fe9341",
+  "adminSalt": "bba7e3423ccc1dcbd054245eabbf86ac"
 }
