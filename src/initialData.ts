@@ -1,0 +1,349 @@
+import { UniverseData, SecretRoomData } from './types';
+
+export const INITIAL_SETTINGS = {
+  partnerName: 'Sampa',
+  authorName: 'Forever Yours',
+  anniversaryDate: '2022-10-01T00:00:00Z',
+  heroTagline: 'An entire universe created for one person.',
+  heroSubtext: 'Every second, every galaxy, every heartbeat in this space belongs exclusively to Sampa.',
+  customDomain: 'www.sampa-love.com',
+  disableSearchEngineIndexing: false,
+};
+
+export const INITIAL_SECRET_ROOM: SecretRoomData = {
+  password: 'foreverandsampa',
+  hint: 'Our sacred word combining forever and your name',
+  title: 'The Hidden Sanctuary of My Heart',
+  secretLetter: `My dearest Sampa,\n\nIf you have unlocked this room, you hold the deepest key to my soul. Long before words existed, the universe wrote our story in stardust. No distance, no quiet night, and no passing year could ever diminish how intensely I love you.\n\nEvery day with you feels like discovering a new constellation. Thank you for your warmth, your laughter, your gentle gaze, and the way you make the whole chaotic world feel quiet and safe.\n\nThis secret corner will always be ours. Whenever you feel overwhelmed by the world, return here to remember: you are cherished beyond human comprehension.\n\nForever and always,\nYour soulmate.`,
+  secretPhotos: [
+    'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?q=80&w=1200&auto=format&fit=crop'
+  ],
+  specialAudioUrl: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=romantic-piano-112199.mp3'
+};
+
+export const INITIAL_UNIVERSE: UniverseData = {
+  settings: INITIAL_SETTINGS,
+  photos: [
+    {
+      id: 'photo-1',
+      title: 'The Beginning of Us',
+      url: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1200&auto=format&fit=crop',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=400&auto=format&fit=crop',
+      caption: 'The golden autumn day when our universe began and our hearts became one.',
+      date: '2022-10-01',
+      category: 'special-days',
+      album: 'First Chapters',
+      isFavorite: true,
+      order: 1
+    },
+    {
+      id: 'photo-2',
+      title: 'Coffee Date & Endless Talks',
+      url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1200&auto=format&fit=crop',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=400&auto=format&fit=crop',
+      caption: 'We ordered two cups of warm coffee and talked until the streetlights lit up.',
+      date: '2023-12-04',
+      category: 'everyday',
+      album: 'First Chapters',
+      isFavorite: true,
+      order: 2
+    },
+    {
+      id: 'photo-3',
+      title: 'Under the Velvet Starlight',
+      url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=400&auto=format&fit=crop',
+      caption: 'Looking up at the constellations and realizing you are my whole sky.',
+      date: '2024-01-20',
+      category: 'trips',
+      album: 'Escapes & Roadtrips',
+      isFavorite: true,
+      order: 3
+    },
+    {
+      id: 'photo-4',
+      title: 'Holding Hands in the Rain',
+      url: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=1200&auto=format&fit=crop',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=400&auto=format&fit=crop',
+      caption: 'When the monsoon shower caught us and neither of us wanted to run inside.',
+      date: '2024-04-12',
+      category: 'candid',
+      album: 'Unfiltered Moments',
+      isFavorite: false,
+      order: 4
+    },
+    {
+      id: 'photo-5',
+      title: 'Our Spontaneous Roadtrip',
+      url: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=1200&auto=format&fit=crop',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=400&auto=format&fit=crop',
+      caption: 'Windows down, our playlist blasting, and your fingers laced through mine.',
+      date: '2024-06-18',
+      category: 'trips',
+      album: 'Escapes & Roadtrips',
+      isFavorite: true,
+      order: 5
+    },
+    {
+      id: 'photo-6',
+      title: 'The Cutest Candid Laugh',
+      url: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?q=80&w=1200&auto=format&fit=crop',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?q=80&w=400&auto=format&fit=crop',
+      caption: 'Captured mid-giggle when you thought you looked silly, but looked completely ethereal.',
+      date: '2024-08-30',
+      category: 'candid',
+      album: 'Unfiltered Moments',
+      isFavorite: true,
+      order: 6
+    }
+  ],
+  memories: [
+    {
+      id: 'mem-1',
+      slug: 'the-day-we-began-loving',
+      title: 'The Day the Universe Began',
+      date: '2022-10-01',
+      location: 'Where Two Souls Became One',
+      category: 'Milestone',
+      summary: '1 October 2022 — The sacred day we started loving each other and our forever story began.',
+      description: 'October 1, 2022 will forever remain etched as the most significant date in my existence. The moment we knew we loved each other, the noise of the entire world quieted down, leaving only the warmth of your hand in mine. Every second counted since this day is a testament to eternal devotion.',
+      photoUrls: [
+        'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1200&auto=format&fit=crop',
+        'https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1200&auto=format&fit=crop'
+      ],
+      featured: true,
+      tags: ['1 October 2022', 'Our Beginning', 'Forever Love', 'Milestone']
+    },
+    {
+      id: 'mem-2',
+      slug: 'stargazing-night',
+      title: 'Whispering Under Midnight Stars',
+      date: '2024-01-20',
+      location: 'Hilltop Pine Ridge',
+      category: 'Special Night',
+      summary: 'Lying on a blanket watching shooting stars and sharing our quietest dreams.',
+      description: 'Wrapped in two oversized jackets and a thermos of hot cocoa, we counted satellites and shooting stars. You pointed to Orion and told me your childhood wishes. That night I realized my only wish was right beside me, shivering cute breaths into the frosty midnight air.',
+      photoUrls: [
+        'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=1200&auto=format&fit=crop'
+      ],
+      featured: true,
+      tags: ['Stargazing', 'Hilltop', 'Wishes', 'Quiet Night']
+    },
+    {
+      id: 'mem-3',
+      slug: 'the-rain-dance',
+      title: 'Caught in the Summer Storm',
+      date: '2024-04-12',
+      location: 'Old Town Square',
+      category: 'Spontaneous',
+      summary: 'Drenched in sudden rain without caring about drenched shoes or messy hair.',
+      description: 'A sudden downpour caught us halfway between stores. Instead of seeking shelter, you started dancing on the wet cobblestone puddles. I caught your waist and twirled you around while cars passed by splashing water. It remains one of the purest glimpses of heaven I have ever known.',
+      photoUrls: [
+        'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=1200&auto=format&fit=crop'
+      ],
+      featured: true,
+      tags: ['Monsoon', 'Dancing', 'Laughter', 'Unplanned']
+    },
+    {
+      id: 'mem-4',
+      slug: 'cozy-sunday-morning',
+      title: 'Our Secret Sunday Breakfast',
+      date: '2024-07-07',
+      location: 'The Warm Kitchen Sanctuary',
+      category: 'Everyday Joy',
+      summary: 'Burnt pancakes, spilled syrup, and laughter echoing across the kitchen counter.',
+      description: 'We tried flipping pancakes and accidentally stuck one to the ceiling edge. You laughed with your eyes crinkling and flour on your nose. Those gentle, ordinary mornings are what real forever is made of.',
+      photoUrls: [
+        'https://images.unsplash.com/photo-1529333166437-7750a6dd5a70?q=80&w=1200&auto=format&fit=crop'
+      ],
+      featured: false,
+      tags: ['Breakfast', 'Cozy', 'Home', 'Pancakes']
+    }
+  ],
+  letters: [
+    {
+      id: 'let-1',
+      title: 'To Sampa, On the Miracle of You',
+      date: '2024-01-01',
+      excerpt: 'There are over eight billion people living on this planet, yet in you, my heart found its singular sanctuary...',
+      content: `My dearest Sampa,\n\nThere are over eight billion people living on this planet, each rushing toward their own horizons. Yet among all those souls and coincidences, you crossed my path and turned monochrome days into vibrant color.\n\nThank you for loving me with patience, for listening to my wildest ideas, and for holding my hand when doubts cloud my mind. Whenever I look at you, I see someone rare, precious, and kind.\n\nI love you more than spoken sentences could ever summarize.\n\nWith all my heart,\nYour eternal admirer.`,
+      unlockDate: null,
+      signature: 'Forever Yours ❤️',
+      sealColor: '#e11d48'
+    },
+    {
+      id: 'let-2',
+      title: 'For the Hard and Quiet Days',
+      date: '2024-05-10',
+      excerpt: 'Open this whenever the world feels heavy and you need a gentle reminder of how deeply cherished you are...',
+      content: `Dearest Sampa,\n\nIf you are reading this on a day that felt exhausting or unfair, take a deep breath. Drop your shoulders. Unclench your jaw.\n\nYou do not have to be strong every second. You do not have to carry the whole weight of expectations. In my arms, you are always safe to simply exist, to rest, and to let go.\n\nYou are resilient, you are brilliant, and you are loved without conditions or deadlines.\n\nAlways here, always beside you.`,
+      unlockDate: null,
+      signature: 'Your safe harbor',
+      sealColor: '#be123c'
+    },
+    {
+      id: 'let-3',
+      title: 'Our Next Anniversary Capsule',
+      date: '2025-11-15',
+      excerpt: 'A time-locked sealed letter waiting for our special milestone anniversary date...',
+      content: `Happy Anniversary, my beloved Sampa!\n\nAnother full circle around the sun, and another year of choosing each other through every sunrise and midnight conversation.\n\nLook back at everything we built, weathered, and laughed through. I would choose you in every lifetime, in every alternate universe, in every timeline.\n\nHere is to our forever journey ahead!`,
+      unlockDate: '2026-11-15T00:00:00Z',
+      signature: 'Your Forever Husband/Soulmate',
+      sealColor: '#9f1239'
+    }
+  ],
+  reasons: [
+    {
+      id: 'rs-1',
+      number: 1,
+      title: 'Your radiant, soul-warming smile',
+      description: 'The way your whole face lights up and crinkles at the corners when something genuinely amuses you.',
+      category: 'Appearance & Spirit',
+      heartCount: 142
+    },
+    {
+      id: 'rs-2',
+      number: 2,
+      title: 'How safe I feel in your presence',
+      description: 'In a noisy and exhausting world, simply hearing your voice quiets all internal chaos and brings me peace.',
+      category: 'Soul Connection',
+      heartCount: 98
+    },
+    {
+      id: 'rs-3',
+      number: 3,
+      title: 'Your immense kindness toward others',
+      description: 'The gentle empathy you extend toward strangers, animals, and anyone carrying a heavy burden.',
+      category: 'Heart & Character',
+      heartCount: 87
+    },
+    {
+      id: 'rs-4',
+      number: 4,
+      title: 'How your hand fits perfectly in mine',
+      description: 'As though the contours of our fingers were drafted by celestial architects to interlock without slipping.',
+      category: 'Touches',
+      heartCount: 115
+    },
+    {
+      id: 'rs-5',
+      number: 5,
+      title: 'Your cute determination when learning something new',
+      description: 'That adorable focus expression where you bite your lip slightly when concentrating.',
+      category: 'Quirks',
+      heartCount: 76
+    },
+    {
+      id: 'rs-6',
+      number: 6,
+      title: 'The way you believe in my dreams',
+      description: 'Even when I doubt my own strength, your faith in me gives me the courage of a lion.',
+      category: 'Partnership',
+      heartCount: 104
+    }
+  ],
+  promises: [
+    {
+      id: 'prom-1',
+      title: 'To always listen with an open, tender heart',
+      description: 'Never just waiting for my turn to speak, but listening to understand your fears, hopes, and quiet sighs.',
+      category: 'Communication',
+      status: 'forever',
+      dateGiven: '2023-11-15'
+    },
+    {
+      id: 'prom-2',
+      title: 'To never let the spark of romance fade into routine',
+      description: 'To keep bringing you surprise flowers, writing spontaneous notes, and kissing your forehead just because.',
+      category: 'Romance',
+      status: 'forever',
+      dateGiven: '2023-12-25'
+    },
+    {
+      id: 'prom-3',
+      title: 'To stand as your unshakeable shield and safe harbor',
+      description: 'Whenever storms rise or the world turns cold, my shoulder and arms will always be your unbreakable shelter.',
+      category: 'Protection & Loyalty',
+      status: 'always',
+      dateGiven: '2024-02-14'
+    },
+    {
+      id: 'prom-4',
+      title: 'To celebrate every one of your victories as my own',
+      description: 'To cheer the loudest in the front row whenever you step into your brilliance.',
+      category: 'Support',
+      status: 'kept',
+      dateGiven: '2024-05-01'
+    }
+  ],
+  plans: [
+    {
+      id: 'plan-1',
+      title: 'Northern Lights under glass igloos in Tromsø',
+      category: 'travel',
+      targetDate: 'Winter 2026',
+      isCompleted: false,
+      notes: 'Sleeping beneath the dancing Aurora Borealis with warm blankets and hot cider.'
+    },
+    {
+      id: 'plan-2',
+      title: 'Our cozy dream home with a sunny reading nook',
+      category: 'home',
+      targetDate: '2027',
+      isCompleted: false,
+      notes: 'Floor to ceiling bookshelves, soft rugs, and a wide window facing a blooming garden.'
+    },
+    {
+      id: 'plan-3',
+      title: 'Adopting a rescue golden retriever pup',
+      category: 'milestone',
+      targetDate: 'Spring 2027',
+      isCompleted: false,
+      notes: 'Teaching him to fetch our morning newspaper and take him on beach runs.'
+    },
+    {
+      id: 'plan-4',
+      title: 'Sunset dinner in Santorini overlooking the caldera',
+      category: 'travel',
+      targetDate: 'Summer 2026',
+      isCompleted: false,
+      notes: 'White houses, azure domes, Aegean sea breeze, and toast to our endless love.'
+    }
+  ],
+  music: [
+    {
+      id: 'trk-1',
+      title: 'Can\'t Help Falling in Love (Instrumental Melodies)',
+      artist: 'Kina Grannis & Ethereal Strings',
+      url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=romantic-piano-112199.mp3',
+      duration: '3:24',
+      mood: 'Tender & Nostalgic',
+      albumCover: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=400&auto=format&fit=crop',
+      specialNote: 'The melody that plays in my head every time I see you walk toward me.'
+    },
+    {
+      id: 'trk-2',
+      title: 'Starlight Nocturne for Sampa',
+      artist: 'Celestial Piano Ensemble',
+      url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=gentle-piano-love-story-10878.mp3',
+      duration: '2:50',
+      mood: 'Dreamy & Peaceful',
+      albumCover: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=400&auto=format&fit=crop',
+      specialNote: 'Our late-night stargazing soundtrack.'
+    },
+    {
+      id: 'trk-3',
+      title: 'Until I Found You (Acoustic Whispers)',
+      artist: 'Acoustic Soul',
+      url: 'https://cdn.pixabay.com/download/audio/2022/11/06/audio_c1e09968a5.mp3?filename=relaxing-romantic-acoustic-guitar-124905.mp3',
+      duration: '3:10',
+      mood: 'Warm & Uplifting',
+      albumCover: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=400&auto=format&fit=crop',
+      specialNote: 'Because I was wandering until the day you took my hand.'
+    }
+  ]
+};
+
+export const initialUniverseData = INITIAL_UNIVERSE;

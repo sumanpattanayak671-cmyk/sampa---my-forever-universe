@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAMPA — MY FOREVER UNIVERSE</title>
+  <meta name="description" content="An entire universe created for one person. Dedicated to Sampa.">
+
+  <!-- Romantic Typography Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+  <!-- Canvas Confetti for Secret Room Unlock -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+  <!-- Hairline Loading Progress Bar -->
+  <div id="loader" class="loader">
+    <div id="loader-bar" class="loader-bar"></div>
+  </div>
+
+  <!-- Background Pinned Video Scrubbing Canvas (220 Frames) -->
+  <canvas id="canvas"></canvas>
+
+  <!-- Ambient Vignette & Gradient Shimmer -->
+  <div class="canvas-overlay"></div>
+
+  <!-- Sticky Glassmorphic Navigation Bar -->
+  <header class="navbar" id="navbar">
+    <div class="nav-container">
+      <!-- Brand Logo -->
+      <a href="#hero" class="nav-brand">
+        <div class="brand-avatar">S/U</div>
+        <div class="brand-text">
+          <span class="brand-name">SAMPA</span>
+          <span class="brand-sub">— My Forever Universe</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="nav-links">
+        <a href="#hero" class="nav-link active">Home</a>
+        <a href="#our-story" class="nav-link">Our Story</a>
+        <a href="#memories" class="nav-link">Memories</a>
+        <a href="#gallery" class="nav-link">Gallery</a>
+        <a href="#letters" class="nav-link">Letters</a>
+        <a href="#reasons" class="nav-link">Reasons</a>
+        <a href="#music" class="nav-link">Music</a>
+        <a href="#future" class="nav-link">Future</a>
+        <a href="#promises" class="nav-link">Promises</a>
+        <a href="#secret-room" class="nav-link nav-link-secret">
+          <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Secret Room
+        </a>
+      </nav>
+
+      <!-- Right Action Controls -->
+      <div class="nav-actions">
+        <!-- Quick Music Toggle Pill -->
+        <button id="nav-music-btn" class="pill-btn music-pill" title="Toggle Romantic Music">
+          <div class="music-wave" id="nav-music-wave">
+            <span></span><span></span><span></span>
+          </div>
+          <span id="nav-music-title">Play Music</span>
+        </button>
+
+        <!-- Live Archive Pulse Pill -->
+        <div class="pill-btn status-pill">
+          <span class="pulse-dot"></span>
+          <span class="hidden-mobile">LIVE UNIVERSE</span>
+        </div>
+
+        <!-- Mobile Menu Toggle -->
+        <button id="mobile-toggle" class="icon-btn mobile-only" aria-label="Toggle menu">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Drawer -->
+    <div id="mobile-menu" class="mobile-menu">
+      <a href="#hero" class="mobile-link">Home</a>
+      <a href="#our-story" class="mobile-link">Our Story</a>
+      <a href="#memories" class="mobile-link">Memories</a>
+      <a href="#gallery" class="mobile-link">Photo Gallery</a>
+      <a href="#letters" class="mobile-link">Love Letters</a>
+      <a href="#reasons" class="mobile-link">100 Reasons</a>
+      <a href="#music" class="mobile-link">Our Music</a>
+      <a href="#future" class="mobile-link">Our Future</a>
+      <a href="#promises" class="mobile-link">Eternal Promises</a>
+      <a href="#secret-room" class="mobile-link secret-link">
+        <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        The Secret Room
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Webpage Content (Rendered on top of Scroll Animation Canvas) -->
+  <main class="content-wrapper" id="content-wrapper">
+
+    <!-- ==================== HERO SECTION ==================== -->
+    <section class="section hero-section" id="hero">
+      <div class="hero-card glass-card">
+        <div class="badge">
+          <span class="sparkle-icon">✦</span>
+          <span>ARCHIVE ENTRY #001 // DEDICATED TO SAMPA</span>
+          <span class="sparkle-icon">✦</span>
+        </div>
+
+        <h1 class="hero-title">
+          A sanctuary designed <br>
+          <span class="hero-name-highlight">SAMPA</span>
+        </h1>
+
+        <p class="hero-quote">
+          “An entire universe created for one person.”
+        </p>
+
+        <p class="hero-subtext">
+          Every second, every galaxy, every heartbeat in this space belongs exclusively to Sampa.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="hero-actions">
+          <a href="#our-story" class="btn btn-primary">
+            <span>Explore Our Story</span>
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#gallery" class="btn btn-secondary">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span>Photo Archive</span>
+          </a>
+          <a href="#secret-room" class="btn btn-tertiary">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>Secret Room</span>
+          </a>
+        </div>
+
+        <!-- Live Love Relationship Counter Banner -->
+        <div class="timer-card glass-card-nested">
+          <div class="timer-header">
+            <svg class="heart-icon fill-heart" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+            <span class="timer-label">LOVING EACH OTHER FOR</span>
+            <svg class="heart-icon fill-heart" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </div>
+          <div class="timer-origin">
+            Loving each other from 1 October 2022
+          </div>
+
+          <div class="timer-grid">
+            <div class="timer-box">
+              <div class="timer-number" id="timer-days">0</div>
+              <div class="timer-unit">DAYS</div>
+            </div>
+            <div class="timer-box">
+              <div class="timer-number" id="timer-hours">0</div>
+              <div class="timer-unit">HOURS</div>
+            </div>
+            <div class="timer-box">
+              <div class="timer-number" id="timer-minutes">0</div>
+              <div class="timer-unit">MINUTES</div>
+            </div>
+            <div class="timer-box timer-box-highlight">
+              <div class="timer-number" id="timer-seconds">0</div>
+              <div class="timer-unit">SECONDS</div>
+            </div>
+          </div>
+
+          <div class="timer-footer">
+            Every second, sunrise, and heartbeat counted since October 1, 2022
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== FEATURED MEMORY SPOTLIGHT ==================== -->
+    <section class="section" id="featured-memory-section">
+      <div class="section-header">
+        <div>
+          <span class="section-badge">CHAPTER HIGHLIGHT</span>
+          <h2 class="section-title">Special Memory Spotlight</h2>
+        </div>
+        <a href="#memories" class="section-link">
+          <span>View All Memories (4)</span>
+          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="spotlight-card glass-card">
+        <div class="spotlight-image-col">
+          <img src="https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1200&auto=format&fit=crop" alt="The Beginning of Us" class="spotlight-img">
+          <div class="category-pill">Milestone</div>
+        </div>
+
+        <div class="spotlight-content-col">
+          <div>
+            <div class="spotlight-meta">
+              <span class="meta-item">
+                <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                2022-10-01
+              </span>
+              <span class="meta-item">
+                <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Where Two Souls Became One
+              </span>
+            </div>
+
+            <h3 class="spotlight-title">The Day the Universe Began</h3>
+
+            <p class="spotlight-summary">
+              “1 October 2022 — The sacred day we started loving each other and our forever story began.”
+            </p>
+
+            <div class="tag-list">
+              <span class="tag">#1 October 2022</span>
+              <span class="tag">#Our Beginning</span>
+              <span class="tag">#Forever Love</span>
+              <span class="tag">#Milestone</span>
+            </div>
+          </div>
+
+          <div class="spotlight-actions">
+            <button class="btn btn-primary" onclick="openStoryModal('mem-1')">
+              <span>Read Full Chapter</span>
+              <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <button class="btn btn-outline" onclick="openShareModal('The Day the Universe Began', '1 October 2022 — The sacred day we started loving each other', 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=1200&auto=format&fit=crop')">
+              <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              <span>Share</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== PHOTO ARCHIVE GRID ==================== -->
+    <section class="section" id="gallery">
+      <div class="section-header">
+        <div>
+          <span class="section-badge">PHOTO ARCHIVE</span>
+          <h2 class="section-title">Moments Frozen in Stardust</h2>
+        </div>
+        <a href="#gallery" class="section-link">
+          <span>Explore Full Gallery (6)</span>
+          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+
+      <div class="photos-grid" id="favorites-gallery">
+        <!-- Injected via JavaScript -->
+      </div>
+    </section>
+
+    <!-- ==================== BENTO: LETTERS & REASONS ==================== -->
+    <section class="section">
+      <div class="bento-grid">
+        <!-- Love Letters Card -->
+        <div class="bento-card glass-card">
+          <div class="badge">SEALED ENVELOPES</div>
+          <h3 class="bento-title">Love Letters for Sampa</h3>
+          <p class="bento-desc">
+            Intimate digital letters penned from my deepest thoughts, including scheduled time capsules set to unlock on our future milestones.
+          </p>
+
+          <div class="bento-list" id="letters-preview-list">
+            <!-- Injected via JS -->
+          </div>
+
+          <a href="#letters" class="btn btn-secondary w-full">
+            <span>Open Letter Vault</span>
+            <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+
+        <!-- Reasons Card -->
+        <div class="bento-card glass-card">
+          <div class="badge">ENDLESS AFFECTION</div>
+          <h3 class="bento-title">Reasons Why I Love You</h3>
+          <p class="bento-desc">
+            From your radiant laugh to how our hands fit together without slipping. Each reason cataloged for you to read anytime.
+          </p>
+
+          <div class="bento-list" id="reasons-preview-list">
+            <!-- Injected via JS -->
+          </div>
+
+          <a href="#reasons" class="btn btn-secondary w-full">
+            <span>Explore All Reasons</span>
+            <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== OUR ROMANTIC STORY & TIMELINE ==================== -->
+    <section class="section" id="our-story">
+      <div class="section-header center">
+        <span class="section-badge">SACRED CHRONICLES</span>
+        <h2 class="section-title">Our Romantic Story</h2>
+        <p class="section-subtext">The story of how two wandering souls converged into one eternal constellation.</p>
+      </div>
+
+      <div class="timeline" id="story-timeline">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- ==================== ALL MEMORIES ARCHIVE ==================== -->
+    <section class="section" id="memories">
+      <div class="section-header">
+        <div>
+          <span class="section-badge">MEMORIES REPOSITORY</span>
+          <h2 class="section-title">Shared Cosmic Chapters</h2>
+        </div>
+      </div>
+
+      <!-- Category Filter Pills -->
+      <div class="filter-pills" id="memory-filter-pills">
+        <button class="pill active" data-filter="all">All Chapters</button>
+        <button class="pill" data-filter="Milestone">Milestones</button>
+        <button class="pill" data-filter="Special Night">Special Nights</button>
+        <button class="pill" data-filter="Spontaneous">Spontaneous</button>
+        <button class="pill" data-filter="Everyday Joy">Everyday Joy</button>
+      </div>
+
+      <div class="memories-grid" id="memories-grid">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- ==================== LOVE LETTERS VAULT ==================== -->
+    <section class="section" id="letters">
+      <div class="section-header center">
+        <span class="section-badge">LETTER ARCHIVE</span>
+        <h2 class="section-title">Letters From My Soul</h2>
+        <p class="section-subtext">Click on any wax-sealed envelope to unfold the handwritten digital letter.</p>
+      </div>
+
+      <div class="letters-grid" id="letters-vault-grid">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- ==================== REASONS WHY I LOVE YOU ==================== -->
+    <section class="section" id="reasons">
+      <div class="section-header center">
+        <span class="section-badge">COUNTLESS REASONS</span>
+        <h2 class="section-title">Reasons Why I Love You</h2>
+        <p class="section-subtext">Tap the heart on any reason to send a pulse of affection to Sampa.</p>
+      </div>
+
+      <div class="reasons-grid" id="reasons-full-grid">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- ==================== OUR MUSIC SOUNDTRACK ==================== -->
+    <section class="section" id="music">
+      <div class="section-header">
+        <div>
+          <span class="section-badge">MELODY ARCHIVE</span>
+          <h2 class="section-title">Our Romantic Soundtrack</h2>
+        </div>
+      </div>
+
+      <div class="music-tracks-grid" id="music-tracks-list">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- ==================== OUR FUTURE ROADMAP ==================== -->
+    <section class="section" id="future">
+      <div class="section-header center">
+        <span class="section-badge">THE HORIZON</span>
+        <h2 class="section-title">Our Future Dreams & Bucket List</h2>
+        <p class="section-subtext">Constellations waiting for our footsteps in the years ahead.</p>
+      </div>
+
+      <div class="future-grid" id="future-plans-grid">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- ==================== ETERNAL PROMISES ==================== -->
+    <section class="section" id="promises">
+      <div class="section-header center">
+        <span class="section-badge">SACRED VOWS</span>
+        <h2 class="section-title">Promises Written in Stardust</h2>
+        <p class="section-subtext">Unbreakable oaths of devotion made to you, preserved for eternity.</p>
+      </div>
+
+      <div class="promises-grid" id="promises-grid">
+        <!-- Injected via JS -->
+      </div>
+    </section>
+
+    <!-- ==================== THE SECRET ROOM ==================== -->
+    <section class="section" id="secret-room">
+      <div class="section-header center">
+        <span class="section-badge">SANCTUM SANCTORUM</span>
+        <h2 class="section-title">The Secret Room</h2>
+        <p class="section-subtext">A deeply private chamber dedicated exclusively to Sampa. Only those who know our sacred phrase may enter.</p>
+      </div>
+
+      <!-- Locked State Card -->
+      <div class="secret-vault-card glass-card" id="secret-locked-card">
+        <div class="vault-icon-circle">
+          <svg class="vault-lock-icon animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+
+        <h3 class="vault-heading">Protected with Eternal Passcode</h3>
+        <p class="vault-hint">
+          <strong>Secret Hint:</strong> Our sacred word combining <em>forever</em> and your name.
+        </p>
+
+        <form id="secret-form" class="secret-form" onsubmit="unlockSecretRoom(event)">
+          <div class="input-wrap">
+            <input type="password" id="secret-input" class="secret-input" placeholder="Enter secret phrase..." autocomplete="off" required>
+            <button type="button" class="eye-btn" onclick="toggleSecretVisibility()" title="Toggle visibility">
+              <svg class="icon-xs" id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+
+          <div id="secret-error" class="secret-error-msg" style="display: none;"></div>
+
+          <button type="submit" class="btn btn-primary w-full">
+            <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
+            <span>Unlock Secret Sanctuary</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- Unlocked State Container (Hidden by default) -->
+      <div class="secret-unlocked-container glass-card" id="secret-unlocked-card" style="display: none;">
+        <div class="unlocked-header">
+          <div class="badge badge-gold">✦ UNLOCKED PRIVATE SANCTUARY ✦</div>
+          <h3 class="unlocked-title">The Hidden Sanctuary of My Heart</h3>
+          <p class="unlocked-date">Unlocked for Sampa • Sealed for Eternity</p>
+        </div>
+
+        <div class="secret-letter-body" id="secret-letter-text">
+          <!-- Injected via JS -->
+        </div>
+
+        <div class="secret-gallery-wrap">
+          <h4 class="secret-gallery-title">Private Sanctuary Photographs</h4>
+          <div class="secret-photos-grid" id="secret-photos-grid">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="footer">
+      <div class="footer-container">
+        <div class="footer-grid">
+          <div class="footer-brand-col">
+            <div class="footer-logo">
+              <span>SAMPA</span>
+              <span class="footer-dash">—</span>
+              <span class="footer-sub">MY FOREVER UNIVERSE</span>
+            </div>
+            <p class="footer-quote">“An entire universe created for one person.”</p>
+            <p class="footer-dedication">Handcrafted with devotion by Forever Yours for Sampa.</p>
+          </div>
+
+          <div class="footer-links-col">
+            <div class="footer-col-title">PORTALS</div>
+            <a href="#our-story">Our Romantic Timeline</a>
+            <a href="#memories">Shared Memories</a>
+            <a href="#gallery">Photograph Archive</a>
+            <a href="#letters">Time-Locked Letters</a>
+            <a href="#reasons">Why I Love You</a>
+            <a href="#future">Future Dreams & Bucket List</a>
+          </div>
+
+          <div class="footer-links-col">
+            <div class="footer-col-title">SANCTUARY</div>
+            <a href="#secret-room">
+              <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              The Secret Room
+            </a>
+            <a href="#music">Our Melody Playlist</a>
+            <a href="#promises">Eternal Promises & Vows</a>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <div class="footer-code">ARCHIVE CODE: 2024.11.08 // SYSTEM VERIFIED</div>
+          <div class="footer-sync">
+            <span>ETERNAL SYNC: ACTIVE</span>
+            <svg class="heart-icon fill-heart inline" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </div>
+          <button class="scroll-top-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+            <span>Top of Page</span>
+            <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+  <!-- ==================== FLOATING AUDIO DOCK ==================== -->
+  <div class="floating-music-dock" id="floating-music-dock">
+    <div class="music-card glass-card">
+      <div class="dock-header">
+        <div class="dock-track-info">
+          <div class="dock-album-art" id="dock-album-art">
+            <img src="https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=400&auto=format&fit=crop" id="dock-cover-img" alt="Album Cover">
+            <div class="dock-ping" id="dock-ping"></div>
+          </div>
+          <div class="dock-text">
+            <div class="dock-title" id="dock-track-title">Can't Help Falling in Love</div>
+            <div class="dock-artist" id="dock-track-artist">Kina Grannis & Strings</div>
+          </div>
+        </div>
+
+        <button class="dock-toggle-btn" id="dock-collapse-btn" onclick="toggleDockMinimize()" title="Minimize / Expand">
+          <svg class="icon-xs" id="dock-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </button>
+      </div>
+
+      <div class="dock-expanded-body" id="dock-expanded-body">
+        <!-- Progress Bar -->
+        <div class="progress-wrap">
+          <span class="time-label" id="time-current">0:00</span>
+          <input type="range" min="0" max="100" value="0" class="time-slider" id="time-slider" oninput="handleSeek(this.value)">
+          <span class="time-label" id="time-duration">3:24</span>
+        </div>
+
+        <!-- Controls -->
+        <div class="dock-controls">
+          <button class="dock-ctrl-btn" onclick="prevTrack()" title="Previous Track">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/></svg>
+          </button>
+
+          <button class="dock-play-btn" id="dock-play-btn" onclick="toggleMusicPlayback()" title="Play / Pause">
+            <svg class="icon" id="play-pause-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </button>
+
+          <button class="dock-ctrl-btn" onclick="nextTrack()" title="Next Track">
+            <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio Element -->
+  <audio id="global-audio" preload="none"></audio>
+
+  <!-- ==================== LIGHTBOX MODAL ==================== -->
+  <div class="modal-backdrop" id="lightbox-modal" style="display: none;">
+    <button class="modal-close-btn" onclick="closeLightbox()">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <button class="lightbox-arrow lightbox-prev" onclick="prevLightbox()">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="lightbox-arrow lightbox-next" onclick="nextLightbox()">
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+
+    <div class="lightbox-content">
+      <div class="lightbox-image-wrap">
+        <img id="lightbox-img" src="" alt="Photo" class="lightbox-image">
+      </div>
+      <div class="lightbox-meta">
+        <h3 id="lightbox-title" class="lightbox-title"></h3>
+        <p id="lightbox-caption" class="lightbox-caption"></p>
+        <div id="lightbox-counter" class="lightbox-counter"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOVE LETTER MODAL ==================== -->
+  <div class="modal-backdrop" id="letter-modal" style="display: none;">
+    <div class="letter-modal-dialog">
+      <button class="modal-close-btn inside" onclick="closeLetterModal()">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <div class="wax-seal">
+        <svg class="seal-heart" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </div>
+
+      <div class="letter-header">
+        <div class="badge">DIGITAL SEALED LETTER</div>
+        <h2 id="letter-modal-title" class="letter-modal-title"></h2>
+        <div id="letter-modal-date" class="letter-modal-date"></div>
+      </div>
+
+      <div id="letter-modal-body" class="letter-modal-body"></div>
+
+      <div id="letter-modal-signature" class="letter-modal-signature"></div>
+    </div>
+  </div>
+
+  <!-- ==================== SHARE MODAL ==================== -->
+  <div class="modal-backdrop" id="share-modal" style="display: none;">
+    <div class="share-modal-dialog glass-card">
+      <button class="modal-close-btn inside" onclick="closeShareModal()">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+
+      <div class="share-modal-header">
+        <div class="share-icon-wrap">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </div>
+        <div>
+          <h3 class="share-modal-title">Share This Memory</h3>
+          <p class="share-modal-sub">Send this chapter of our story to Sampa</p>
+        </div>
+      </div>
+
+      <div class="share-preview-card">
+        <img id="share-preview-img" src="" alt="Memory preview" class="share-img">
+        <div class="share-preview-text">
+          <div id="share-preview-title" class="share-card-title"></div>
+          <div id="share-preview-desc" class="share-card-desc"></div>
+        </div>
+      </div>
+
+      <div class="share-social-grid">
+        <button class="social-share-btn" onclick="shareWhatsApp()">
+          <span class="social-name">WhatsApp</span>
+        </button>
+        <button class="social-share-btn" onclick="shareFacebook()">
+          <span class="social-name">Facebook</span>
+        </button>
+        <button class="social-share-btn" onclick="shareX()">
+          <span class="social-name">X (Twitter)</span>
+        </button>
+        <button class="social-share-btn" onclick="shareNative()">
+          <span class="social-name">Share...</span>
+        </button>
+      </div>
+
+      <div class="copy-bar">
+        <input type="text" id="share-copy-input" readonly class="copy-input">
+        <button id="copy-link-btn" class="copy-btn" onclick="copyShareUrl()">Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

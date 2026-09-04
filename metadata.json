@@ -1,0 +1,6 @@
+{
+  "name": "Sampa — My Forever Universe",
+  "description": "An entire universe created for one person. A production-ready romantic portal featuring memories, love letters, timeline, photos, reasons, promises, future plans, music, secret room, and a secure content management admin dashboard.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
