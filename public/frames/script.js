@@ -301,6 +301,117 @@
   }
 
   // ------------------------------------------------------------------------
+  // 2b. AUDIO STORAGE & PLAYBACK ENGINE (IndexedDB)
+  // ------------------------------------------------------------------------
+  const AUDIO_DB_NAME = 'sampa_universe_media';
+  const AUDIO_DB_VERSION = 1;
+  const AUDIO_STORE_NAME = 'audio_tracks';
+
+  function openAudioDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(AUDIO_DB_NAME, AUDIO_DB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(AUDIO_STORE_NAME)) {
+          db.createObjectStore(AUDIO_STORE_NAME);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function saveAudioBlob(key, blob) {
+    try {
+      const db = await openAudioDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(AUDIO_STORE_NAME, 'readwrite');
+        const store = tx.objectStore(AUDIO_STORE_NAME);
+        const req = store.put(blob, key);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+      console.warn('IndexedDB save failed:', e);
+    }
+  }
+
+  async function getAudioBlob(key) {
+    try {
+      const db = await openAudioDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(AUDIO_STORE_NAME, 'readonly');
+        const store = tx.objectStore(AUDIO_STORE_NAME);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+      console.warn('IndexedDB get failed:', e);
+      return null;
+    }
+  }
+
+  async function deleteAudioBlob(key) {
+    try {
+      const db = await openAudioDB();
+      const tx = db.transaction(AUDIO_STORE_NAME, 'readwrite');
+      tx.objectStore(AUDIO_STORE_NAME).delete(key);
+    } catch (e) {
+      console.warn('IndexedDB delete failed:', e);
+    }
+  }
+
+  const audioObjectUrls = {};
+
+  async function resolveTrackUrl(track) {
+    if (!track) return '';
+    if (track.idbKey) {
+      try {
+        if (audioObjectUrls[track.idbKey]) {
+          return audioObjectUrls[track.idbKey];
+        }
+        const blob = await getAudioBlob(track.idbKey);
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          audioObjectUrls[track.idbKey] = url;
+          return url;
+        }
+      } catch (e) {
+        console.warn('Could not read from IndexedDB, falling back to track.url', e);
+      }
+    }
+    return track.url || '';
+  }
+
+  function getAudioDuration(file) {
+    return new Promise((resolve) => {
+      try {
+        const url = URL.createObjectURL(file);
+        const tempAudio = new Audio();
+        tempAudio.src = url;
+        tempAudio.onloadedmetadata = () => {
+          const dur = tempAudio.duration;
+          URL.revokeObjectURL(url);
+          if (!isNaN(dur) && isFinite(dur)) {
+            const m = Math.floor(dur / 60);
+            const s = Math.floor(dur % 60);
+            resolve(`${m}:${s < 10 ? '0' : ''}${s}`);
+          } else {
+            resolve('3:00');
+          }
+        };
+        tempAudio.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve('3:00');
+        };
+      } catch (e) {
+        resolve('3:00');
+      }
+    });
+  }
+
+  // ------------------------------------------------------------------------
   // 3. SCROLL CANVAS ANIMATION ENGINE (220 Frames)
   // ------------------------------------------------------------------------
   const TOTAL_FRAMES = 220;
@@ -777,11 +888,12 @@
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   }
 
-  function loadTrack(idx) {
+  async function loadTrack(idx) {
     currentTrackIdx = idx;
     const track = UNIVERSE.music[idx];
     if (!track) return;
-    audioEl.src = track.url;
+    const resolvedUrl = await resolveTrackUrl(track);
+    audioEl.src = resolvedUrl;
     if (dockCover) dockCover.src = track.cover;
     if (dockTitle) dockTitle.textContent = track.title;
     if (dockArtist) dockArtist.textContent = track.artist;
@@ -837,21 +949,21 @@
     }
   };
 
-  window.nextTrack = () => {
+  window.nextTrack = async () => {
     const nextIdx = (currentTrackIdx + 1) % UNIVERSE.music.length;
-    loadTrack(nextIdx);
-    audioEl.play();
+    await loadTrack(nextIdx);
+    audioEl.play().catch(() => {});
   };
 
-  window.prevTrack = () => {
+  window.prevTrack = async () => {
     const prevIdx = (currentTrackIdx - 1 + UNIVERSE.music.length) % UNIVERSE.music.length;
-    loadTrack(prevIdx);
-    audioEl.play();
+    await loadTrack(prevIdx);
+    audioEl.play().catch(() => {});
   };
 
-  window.selectMusicTrack = (idx) => {
-    loadTrack(idx);
-    audioEl.play();
+  window.selectMusicTrack = async (idx) => {
+    await loadTrack(idx);
+    audioEl.play().catch(() => {});
   };
 
   window.toggleDockMinimize = () => {
@@ -1671,30 +1783,173 @@
   function renderAdminMusic(container) {
     container.innerHTML = `
       <div class="admin-form-card">
-        <h3 class="admin-section-title">🎵 Romantic Music Playlist</h3>
-
-        ${UNIVERSE.music.map((m, idx) => `
-          <div class="admin-item-card">
-            <div class="admin-thumb-box" style="width: 70px; height: 70px;">
-              <img src="${m.cover}" id="adm-music-cover-${idx}">
-              <label class="admin-thumb-replace-btn">
-                Cover
-                <input type="file" accept="image/*" style="display:none" onchange="handleMusicCoverUpload(${idx}, this.files[0])">
-              </label>
-            </div>
-
-            <div class="admin-item-fields">
-              <div class="admin-item-row">
-                <input type="text" class="admin-input" style="flex:2;" value="${m.title}" placeholder="Song Title" oninput="updateMusicField(${idx}, 'title', this.value)">
-                <input type="text" class="admin-input" style="flex:1;" value="${m.artist}" placeholder="Artist" oninput="updateMusicField(${idx}, 'artist', this.value)">
-              </div>
-              <input type="text" class="admin-input" value="${m.url}" placeholder="Audio URL (.mp3 direct link)" oninput="updateMusicField(${idx}, 'url', this.value)">
-            </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h3 class="admin-section-title" style="margin-bottom:4px;">🎵 Romantic Music Playlist</h3>
+            <p style="font-size:12px; color:var(--text-secondary);">Upload your personal romantic songs (.mp3, .m4a, .wav) directly from your phone or PC</p>
           </div>
-        `).join('')}
+          <span style="font-size:12px; color:var(--accent-gold); font-weight:600;">${UNIVERSE.music.length} Songs in Playlist</span>
+        </div>
+
+        <!-- Big Audio File Upload Dropzone -->
+        <div class="upload-dropzone" id="music-audio-dropzone" style="margin-bottom: 24px; padding: 24px;">
+          <input type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.aac" onchange="handleAddNewMusicTrack(this.files[0])">
+          <svg class="upload-dropzone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18V5l12-2v13"></path>
+            <circle cx="6" cy="18" r="3"></circle>
+            <circle cx="18" cy="16" r="3"></circle>
+          </svg>
+          <div class="upload-dropzone-title">Upload Music File From Device (.mp3, .m4a, .wav, .ogg)</div>
+          <div class="upload-dropzone-sub">Click here or drag & drop an audio file to add a new song to Sampa's universe</div>
+        </div>
+
+        <!-- Track List Cards -->
+        <div class="admin-music-list">
+          ${UNIVERSE.music.map((m, idx) => `
+            <div class="admin-item-card" style="align-items:flex-start; margin-bottom:16px;">
+              <div class="admin-thumb-box" style="width: 80px; height: 80px; flex-shrink:0;">
+                <img src="${m.cover}" id="adm-music-cover-${idx}">
+                <label class="admin-thumb-replace-btn" title="Change Cover Image">
+                  Cover
+                  <input type="file" accept="image/*" style="display:none" onchange="handleMusicCoverUpload(${idx}, this.files[0])">
+                </label>
+              </div>
+
+              <div class="admin-item-fields" style="flex:1;">
+                <div class="admin-item-row">
+                  <input type="text" class="admin-input" style="flex:2;" value="${m.title}" placeholder="Song Title" oninput="updateMusicField(${idx}, 'title', this.value)">
+                  <input type="text" class="admin-input" style="flex:1;" value="${m.artist}" placeholder="Artist" oninput="updateMusicField(${idx}, 'artist', this.value)">
+                </div>
+
+                <div style="display:flex; align-items:center; gap:8px; margin-top:4px; flex-wrap:wrap;">
+                  ${m.idbKey
+                    ? `<span class="badge badge-gold" style="font-size:11px; padding:3px 8px;">💾 Uploaded Audio (${m.fileName || 'Device File'})</span>`
+                    : `<span class="badge" style="font-size:11px; padding:3px 8px;">🌐 Web Stream URL</span>`
+                  }
+                  <span style="font-size:11px; color:var(--text-muted);">Duration: ${m.duration || '3:00'}</span>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:8px; margin-top:8px; flex-wrap:wrap;">
+                  <label class="btn btn-secondary btn-sm" style="display:inline-flex; align-items:center; gap:6px; cursor:pointer; font-size:11px; padding:6px 12px;">
+                    <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span>Replace Audio</span>
+                    <input type="file" accept="audio/*,.mp3,.m4a,.wav,.ogg,.aac" style="display:none;" onchange="handleReplaceMusicAudio(${idx}, this.files[0])">
+                  </label>
+
+                  <button class="btn btn-primary btn-sm" style="font-size:11px; padding:6px 14px;" onclick="previewMusicTrack(${idx})">
+                    ▶ Play Now
+                  </button>
+
+                  <button class="admin-delete-btn" style="padding:6px 12px; font-size:11px;" onclick="deleteMusicTrack(${idx})">
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
       </div>
     `;
   }
+
+  window.handleAddNewMusicTrack = async (file) => {
+    if (!file) return;
+    try {
+      showToast('Uploading audio file from device...');
+      const idbKey = 'audio_' + Date.now();
+      await saveAudioBlob(idbKey, file);
+
+      const durationStr = await getAudioDuration(file);
+      const cleanTitle = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') || 'Cherished Melody';
+
+      const newTrack = {
+        id: 'trk-' + Date.now(),
+        title: cleanTitle,
+        artist: UNIVERSE.settings.authorName || 'Forever Yours',
+        url: '',
+        idbKey: idbKey,
+        fileName: file.name,
+        duration: durationStr,
+        cover: 'https://images.unsplash.com/photo-1518199266791-5375a83190b7?q=80&w=400&auto=format&fit=crop'
+      };
+
+      UNIVERSE.music.push(newTrack);
+      window.saveAllUniverseData();
+      renderAllComponents();
+      window.switchAdminTab('music');
+
+      const newIdx = UNIVERSE.music.length - 1;
+      await loadTrack(newIdx);
+      audioEl.play().catch(() => {});
+      showToast(`🎶 "${cleanTitle}" uploaded and playing now!`);
+    } catch (err) {
+      alert('Audio upload failed: ' + err.message);
+    }
+  };
+
+  window.handleReplaceMusicAudio = async (idx, file) => {
+    if (!file || !UNIVERSE.music[idx]) return;
+    try {
+      showToast('Updating audio file...');
+      const idbKey = UNIVERSE.music[idx].idbKey || ('audio_' + Date.now());
+      await saveAudioBlob(idbKey, file);
+
+      const durationStr = await getAudioDuration(file);
+      UNIVERSE.music[idx].idbKey = idbKey;
+      UNIVERSE.music[idx].fileName = file.name;
+      UNIVERSE.music[idx].duration = durationStr;
+
+      if (audioObjectUrls[idbKey]) {
+        URL.revokeObjectURL(audioObjectUrls[idbKey]);
+        delete audioObjectUrls[idbKey];
+      }
+
+      window.saveAllUniverseData();
+      renderAllComponents();
+      window.switchAdminTab('music');
+
+      if (currentTrackIdx === idx) {
+        await loadTrack(idx);
+        audioEl.play().catch(() => {});
+      }
+      showToast(`✅ Audio updated for "${UNIVERSE.music[idx].title}"!`);
+    } catch (err) {
+      alert('Failed to replace audio: ' + err.message);
+    }
+  };
+
+  window.deleteMusicTrack = async (idx) => {
+    if (UNIVERSE.music.length <= 1) {
+      alert('You must have at least one music track in the playlist.');
+      return;
+    }
+    const track = UNIVERSE.music[idx];
+    if (!confirm(`Delete "${track.title}" from the playlist?`)) return;
+
+    if (track && track.idbKey) {
+      await deleteAudioBlob(track.idbKey);
+      if (audioObjectUrls[track.idbKey]) {
+        URL.revokeObjectURL(audioObjectUrls[track.idbKey]);
+        delete audioObjectUrls[track.idbKey];
+      }
+    }
+
+    UNIVERSE.music.splice(idx, 1);
+    if (currentTrackIdx >= UNIVERSE.music.length) {
+      currentTrackIdx = 0;
+    }
+    window.saveAllUniverseData();
+    renderAllComponents();
+    window.switchAdminTab('music');
+    await loadTrack(currentTrackIdx);
+    showToast('Track removed from playlist.');
+  };
+
+  window.previewMusicTrack = async (idx) => {
+    await loadTrack(idx);
+    audioEl.play().catch(() => {});
+    showToast(`▶ Playing: ${UNIVERSE.music[idx].title}`);
+  };
 
   window.handleMusicCoverUpload = async (idx, file) => {
     if (!file) return;
@@ -1705,6 +1960,10 @@
       const img = document.getElementById(`adm-music-cover-${idx}`);
       if (img) img.src = dataUrl;
       window.saveAllUniverseData();
+      renderAllComponents();
+      if (currentTrackIdx === idx && dockCover) {
+        dockCover.src = dataUrl;
+      }
       showToast('✅ Song cover updated!');
     } catch (err) {
       alert('Cover upload failed: ' + err.message);
@@ -1715,6 +1974,11 @@
     if (UNIVERSE.music[idx]) {
       UNIVERSE.music[idx][field] = value;
       renderAllComponents();
+      if (currentTrackIdx === idx) {
+        if (field === 'title' && dockTitle) dockTitle.textContent = value;
+        if (field === 'artist' && dockArtist) dockArtist.textContent = value;
+        if (field === 'title' && navMusicTitle) navMusicTitle.textContent = value;
+      }
     }
   };
 

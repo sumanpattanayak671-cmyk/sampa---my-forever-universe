@@ -119,9 +119,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size < 15MB
-    if (file.size > 15 * 1024 * 1024) {
-      alert('File size exceeds 15MB. Please choose a smaller photo.');
+    // Check size < 40MB
+    if (file.size > 40 * 1024 * 1024) {
+      alert('File size exceeds 40MB. Please choose a smaller file.');
       return;
     }
 
@@ -1514,22 +1514,48 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
                   />
                 </div>
                 <div className="space-y-1 sm:col-span-2">
-                  <label className="text-xs text-[#1A1A1A] font-sans">Audio Stream URL (.mp3 / direct stream)</label>
-                  <input
-                    type="text"
-                    value={editingTrack.url || ''}
-                    onChange={(e) => setEditingTrack({ ...editingTrack, url: e.target.value })}
-                    className="w-full rounded-xl border border-[#DED4C1] bg-white px-3 py-2 text-xs text-white"
-                  />
+                  <label className="text-xs text-[#1A1A1A] font-sans">Audio File / Stream URL (.mp3, .m4a, .wav)</label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      placeholder="Audio URL or choose file from device..."
+                      value={editingTrack.url || ''}
+                      onChange={(e) => setEditingTrack({ ...editingTrack, url: e.target.value })}
+                      className="w-full rounded-xl border border-[#DED4C1] bg-white px-3 py-2 text-xs text-[#1A1A1A]"
+                    />
+                    <label className="cursor-pointer flex items-center gap-1.5 rounded-xl bg-[#1A1A1A] px-3.5 py-2 text-xs font-bold text-white whitespace-nowrap hover:bg-[#333] transition-all">
+                      <Upload className="h-3.5 w-3.5" />
+                      <span>{uploadingFile ? 'Uploading...' : 'Upload Music'}</span>
+                      <input
+                        type="file"
+                        accept="audio/*,.mp3,.m4a,.wav,.ogg,.aac"
+                        className="hidden"
+                        onChange={(e) => handleFileUpload(e, (url) => setEditingTrack((prev) => prev ? { ...prev, url } : null))}
+                      />
+                    </label>
+                  </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-xs text-[#1A1A1A] font-sans">Album Cover Image URL</label>
-                  <input
-                    type="text"
-                    value={editingTrack.albumCover || ''}
-                    onChange={(e) => setEditingTrack({ ...editingTrack, albumCover: e.target.value })}
-                    className="w-full rounded-xl border border-[#DED4C1] bg-white px-3 py-2 text-xs text-white"
-                  />
+                  <label className="text-xs text-[#1A1A1A] font-sans">Album Cover Image</label>
+                  <div className="flex gap-2 items-center">
+                    <input
+                      type="text"
+                      placeholder="Image URL or upload..."
+                      value={editingTrack.albumCover || ''}
+                      onChange={(e) => setEditingTrack({ ...editingTrack, albumCover: e.target.value })}
+                      className="w-full rounded-xl border border-[#DED4C1] bg-white px-3 py-2 text-xs text-[#1A1A1A]"
+                    />
+                    <label className="cursor-pointer flex items-center gap-1.5 rounded-xl border border-[#DED4C1] bg-[#FAF7F2] px-3 py-2 text-xs font-bold text-[#6B5B4A] whitespace-nowrap hover:bg-[#F0EAE1] transition-all">
+                      <ImageIcon className="h-3.5 w-3.5" />
+                      <span>Cover</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleFileUpload(e, (url) => setEditingTrack((prev) => prev ? { ...prev, albumCover: url } : null))}
+                      />
+                    </label>
+                  </div>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs text-[#1A1A1A] font-sans">Mood</label>

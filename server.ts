@@ -283,9 +283,9 @@ app.post('/api/upload', authMiddleware, (req, res) => {
     const base64Data = matches[2];
     const buffer = Buffer.from(base64Data, 'base64');
 
-    // 15MB size limit
-    if (buffer.length > 15 * 1024 * 1024) {
-      return res.status(400).json({ error: 'File exceeds 15MB limit' });
+    // 40MB size limit for media/audio files
+    if (buffer.length > 40 * 1024 * 1024) {
+      return res.status(400).json({ error: 'File exceeds 40MB limit' });
     }
 
     let ext = '.jpg';
@@ -293,6 +293,11 @@ app.post('/api/upload', authMiddleware, (req, res) => {
     else if (mimeType === 'image/webp') ext = '.webp';
     else if (mimeType === 'image/gif') ext = '.gif';
     else if (mimeType === 'image/svg+xml') ext = '.svg';
+    else if (mimeType === 'audio/mpeg' || mimeType === 'audio/mp3') ext = '.mp3';
+    else if (mimeType === 'audio/wav') ext = '.wav';
+    else if (mimeType === 'audio/ogg') ext = '.ogg';
+    else if (mimeType.includes('m4a') || mimeType.includes('mp4') || mimeType.includes('aac')) ext = '.m4a';
+    else if (filename && path.extname(filename)) ext = path.extname(filename);
 
     const safeName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;
     const filePath = path.join(UPLOADS_DIR, safeName);
