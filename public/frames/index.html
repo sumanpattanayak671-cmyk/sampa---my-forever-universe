@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="style.css">
   <!-- Canvas Confetti for Secret Room Unlock -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
+  <!-- YouTube IFrame Player API for streaming YouTube tracks -->
+  <script src="https://www.youtube.com/iframe_api"></script>
 </head>
 <body>
   <!-- Hairline Loading Progress Bar -->
@@ -570,6 +572,10 @@
 
   <!-- Audio Element -->
   <audio id="global-audio" preload="none"></audio>
+  <!-- Background YouTube Audio Player Container -->
+  <div id="yt-player-wrapper" style="position:fixed; bottom:0; right:0; width:1px; height:1px; opacity:0.01; pointer-events:none; z-index:-1000; overflow:hidden;">
+    <div id="yt-player-container"></div>
+  </div>
 
   <!-- ==================== LIGHTBOX MODAL ==================== -->
   <div class="modal-backdrop" id="lightbox-modal" style="display: none;">
