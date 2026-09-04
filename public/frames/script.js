@@ -389,8 +389,76 @@
         "./photos/secret_28.jpg",
         "./photos/secret_29.jpg",
         "./photos/secret_30.jpg",
-        "./photos/secret_31.jpg"
-      ]
+        "./photos/secret_31.jpg",
+        "./photos/secret_32.jpg",
+        "./photos/secret_33.jpg",
+        "./photos/secret_34.jpg",
+        "./photos/secret_35.jpg",
+        "./photos/secret_36.jpg",
+        "./photos/secret_37.jpg",
+        "./photos/secret_38.jpg",
+        "./photos/secret_39.jpg",
+        "./photos/secret_40.jpg",
+        "./photos/secret_41.jpg",
+        "./photos/secret_42.jpg",
+        "./photos/secret_43.jpg",
+        "./photos/secret_44.jpg",
+        "./photos/secret_45.jpg",
+        "./photos/secret_46.jpg",
+        "./photos/secret_47.jpg",
+        "./photos/secret_48.jpg",
+        "./photos/secret_49.jpg",
+        "./photos/secret_50.jpg",
+        "./photos/secret_51.jpg",
+        "./photos/secret_52.jpg",
+        "./photos/secret_53.jpg",
+        "./photos/secret_54.jpg",
+        "./photos/secret_55.jpg",
+        "./photos/secret_56.jpg",
+        "./photos/secret_57.jpg",
+        "./photos/secret_58.jpg",
+        "./photos/secret_59.jpg",
+        "./photos/secret_60.jpg",
+        "./photos/secret_61.jpg",
+        "./photos/secret_62.jpg",
+        "./photos/secret_63.jpg",
+        "./photos/secret_64.jpg",
+        "./photos/secret_65.jpg",
+        "./photos/secret_66.jpg",
+        "./photos/secret_67.jpg",
+        "./photos/secret_68.jpg",
+        "./photos/secret_69.jpg",
+        "./photos/secret_70.jpg",
+        "./photos/secret_71.jpg",
+        "./photos/secret_72.jpg",
+        "./photos/secret_73.jpg",
+        "./photos/secret_74.jpg",
+        "./photos/secret_75.jpg",
+        "./photos/secret_76.jpg",
+        "./photos/secret_77.jpg",
+        "./photos/secret_78.jpg",
+        "./photos/secret_79.jpg",
+        "./photos/secret_80.jpg",
+        "./photos/secret_81.jpg",
+        "./photos/secret_82.jpg",
+        "./photos/secret_83.jpg",
+        "./photos/secret_84.jpg",
+        "./photos/secret_85.jpg",
+        "./photos/secret_86.jpg",
+        "./photos/secret_87.jpg",
+        "./photos/secret_88.jpg",
+        "./photos/secret_89.jpg",
+        "./photos/secret_90.jpg",
+        "./photos/secret_91.jpg",
+        "./photos/secret_92.jpg",
+        "./photos/secret_93.jpg",
+        "./photos/secret_94.jpg",
+        "./photos/secret_95.jpg",
+        "./photos/secret_96.jpg",
+        "./photos/secret_97.jpg",
+        "./photos/secret_98.jpg",
+        "./photos/secret_99.jpg"
+]
     },
     "memoryVideo": {
       "id": "mem-vid-1",
@@ -1615,13 +1683,15 @@
 
       if (letterEl) letterEl.textContent = UNIVERSE.secretRoom.letter;
       if (photosEl) {
+        window.SECRET_ROOM_LIGHTBOX = UNIVERSE.secretRoom.photos.map((u, idx) => ({
+          url: u,
+          title: `Secret Sanctuary Moment #${idx + 1}`,
+          caption: 'Our private memories, eternal in stardust.',
+          album: 'Secret Vault'
+        }));
         photosEl.innerHTML = UNIVERSE.secretRoom.photos.map((url, i) => `
-          <div class="secret-photo-thumb" onclick="openLightbox(${i}, [
-            { url: '${UNIVERSE.secretRoom.photos[0]}', title: 'Secret Sanctuary Photo 1', album: 'Secret Vault' },
-            { url: '${UNIVERSE.secretRoom.photos[1]}', title: 'Secret Sanctuary Photo 2', album: 'Secret Vault' },
-            { url: '${UNIVERSE.secretRoom.photos[2]}', title: 'Secret Sanctuary Photo 3', album: 'Secret Vault' }
-          ])">
-            <img src="${url}" alt="Private Sanctuary Moment">
+          <div class="secret-photo-thumb" onclick="openLightbox(${i}, window.SECRET_ROOM_LIGHTBOX)">
+            <img src="${url}" alt="Private Sanctuary Moment #${i + 1}" loading="lazy">
           </div>
         `).join('');
       }
