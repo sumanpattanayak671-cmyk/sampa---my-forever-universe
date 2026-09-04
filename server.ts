@@ -8,9 +8,9 @@ import { INITIAL_UNIVERSE, INITIAL_SECRET_ROOM } from './src/initialData';
 const app = express();
 const PORT = 3000;
 
-// Increase payload limit for photo uploads
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+// Increase payload limit for photo and video uploads
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
 // Ensure persistent data directories exist
 const DATA_DIR = path.join(process.cwd(), 'data');
@@ -283,20 +283,24 @@ app.post('/api/upload', authMiddleware, (req, res) => {
     const base64Data = matches[2];
     const buffer = Buffer.from(base64Data, 'base64');
 
-    // 40MB size limit for media/audio files
-    if (buffer.length > 40 * 1024 * 1024) {
-      return res.status(400).json({ error: 'File exceeds 40MB limit' });
+    // 100MB size limit for media/video files
+    if (buffer.length > 100 * 1024 * 1024) {
+      return res.status(400).json({ error: 'File exceeds 100MB limit' });
     }
 
-    let ext = '.jpg';
-    if (mimeType === 'image/png') ext = '.png';
+    let ext = '.mp4';
+    if (mimeType === 'image/jpeg' || mimeType === 'image/jpg') ext = '.jpg';
+    else if (mimeType === 'image/png') ext = '.png';
     else if (mimeType === 'image/webp') ext = '.webp';
     else if (mimeType === 'image/gif') ext = '.gif';
     else if (mimeType === 'image/svg+xml') ext = '.svg';
     else if (mimeType === 'audio/mpeg' || mimeType === 'audio/mp3') ext = '.mp3';
     else if (mimeType === 'audio/wav') ext = '.wav';
     else if (mimeType === 'audio/ogg') ext = '.ogg';
-    else if (mimeType.includes('m4a') || mimeType.includes('mp4') || mimeType.includes('aac')) ext = '.m4a';
+    else if (mimeType.includes('m4a') || mimeType.includes('aac')) ext = '.m4a';
+    else if (mimeType === 'video/mp4') ext = '.mp4';
+    else if (mimeType === 'video/webm') ext = '.webm';
+    else if (mimeType === 'video/quicktime') ext = '.mov';
     else if (filename && path.extname(filename)) ext = path.extname(filename);
 
     const safeName = `${Date.now()}-${crypto.randomBytes(6).toString('hex')}${ext}`;

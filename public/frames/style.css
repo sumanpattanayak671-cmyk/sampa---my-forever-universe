@@ -990,6 +990,151 @@ body {
    MEMORIES REPOSITORY
    ========================================================================== */
 
+/* Memory MP4 Video Feature */
+.memory-mp4-container {
+  margin-bottom: 40px;
+  display: none; /* Shown dynamically via JS when video is active */
+}
+
+.memory-mp4-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.memory-mp4-badge {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(244, 63, 94, 0.15);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: #ff758f;
+  padding: 5px 12px;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.memory-mp4-title {
+  font-family: var(--font-serif);
+  font-size: clamp(22px, 3vw, 30px);
+  color: #FFF;
+  font-weight: 400;
+  margin: 0;
+}
+
+.memory-mp4-caption {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.memory-mp4-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 24px;
+  width: 100%;
+}
+
+.memory-mp4-card {
+  position: relative;
+  border-radius: 28px;
+  padding: 24px;
+  overflow: hidden;
+  background: radial-gradient(circle at top left, rgba(244, 63, 94, 0.1), transparent 65%),
+              radial-gradient(circle at bottom right, rgba(168, 85, 247, 0.1), transparent 65%),
+              var(--card-bg);
+  border: 1px solid rgba(255, 77, 109, 0.32);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 25px rgba(244, 63, 94, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  backdrop-filter: blur(24px);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.memory-mp4-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 77, 109, 0.55);
+}
+
+.memory-mp4-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.memory-mp4-card-num {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--accent-rose);
+  text-transform: uppercase;
+}
+
+.memory-mp4-card-title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  color: #FFF;
+  font-weight: 400;
+  margin: 0;
+}
+
+.memory-mp4-card-desc {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.memory-mp4-video-wrap {
+  width: 100%;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-height: 480px;
+}
+
+.memory-mp4-video {
+  width: 100%;
+  max-height: 480px;
+  display: block;
+  outline: none;
+  object-fit: contain;
+}
+
+@media (max-width: 640px) {
+  .memory-mp4-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .memory-mp4-card {
+    padding: 18px 14px;
+    border-radius: 22px;
+    gap: 14px;
+  }
+  .memory-mp4-video-wrap {
+    max-height: 280px;
+  }
+  .memory-mp4-video {
+    max-height: 280px;
+  }
+}
+
 .filter-pills {
   display: flex;
   flex-wrap: wrap;

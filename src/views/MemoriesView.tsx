@@ -73,6 +73,59 @@ export const MemoriesView: React.FC<MemoriesViewProps> = ({ data, navigate, onOp
         </div>
       </div>
 
+      {/* Memory MP4 Video Feature (Supports Multiple Videos) */}
+      {(() => {
+        const videoList = (data.settings.memoryVideos && data.settings.memoryVideos.length > 0)
+          ? data.settings.memoryVideos
+          : (data.settings.memoryVideoUrl ? [{ id: 'vid-1', title: 'Our Memory in Motion', caption: 'Cherished moments in starlight.', url: data.settings.memoryVideoUrl }] : []);
+
+        if (videoList.length === 0) return null;
+
+        return (
+          <div className="overflow-hidden rounded-[32px] border border-[#DED4C1] bg-[#FAF7F2] p-6 sm:p-8 natural-card-shadow space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#EBE4D8] border border-[#DED4C1] px-3 py-1 text-[10px] font-sans uppercase tracking-widest font-semibold text-[#6B5B4A]">
+                  <Sparkles className="h-3 w-3 text-rose-500" />
+                  <span>Romantic Motion Archive // {videoList.length > 1 ? `${videoList.length} Memory Videos` : 'Memory MP4'}</span>
+                </span>
+                <h2 className="font-serif text-2xl sm:text-3xl font-normal text-[#1A1A1A]">
+                  Our Memories in Motion
+                </h2>
+              </div>
+            </div>
+
+            <div className={`grid gap-6 ${videoList.length > 1 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+              {videoList.map((vid, idx) => (
+                <div key={vid.id || idx} className="rounded-2xl border border-[#DED4C1] bg-white p-4 space-y-3 natural-card-shadow">
+                  <div>
+                    <span className="text-[10px] font-sans font-bold text-rose-600 uppercase tracking-widest">
+                      Motion Chapter #{idx + 1}
+                    </span>
+                    <h3 className="font-serif text-lg font-normal text-[#1A1A1A]">
+                      {vid.title || 'Our Romantic Story'}
+                    </h3>
+                    {vid.caption && (
+                      <p className="text-xs text-[#6B5B4A] font-serif italic">
+                        “{vid.caption}”
+                      </p>
+                    )}
+                  </div>
+                  <div className="overflow-hidden rounded-xl bg-black shadow max-h-[420px]">
+                    <video
+                      src={vid.url}
+                      controls
+                      playsInline
+                      className="w-full max-h-[420px] object-contain"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Memories Grid */}
       {filteredMemories.length === 0 ? (
         <div className="py-16 text-center text-[#6B5B4A]">

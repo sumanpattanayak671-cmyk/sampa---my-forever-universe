@@ -85,6 +85,13 @@ export interface SecretRoomData {
   specialAudioUrl?: string;
 }
 
+export interface MemoryVideoItem {
+  id: string;
+  title: string;
+  caption?: string;
+  url: string;
+}
+
 export interface SiteSettings {
   partnerName: string;
   authorName: string;
@@ -93,6 +100,8 @@ export interface SiteSettings {
   heroSubtext: string;
   customDomain: string;
   disableSearchEngineIndexing: boolean;
+  memoryVideoUrl?: string;
+  memoryVideos?: MemoryVideoItem[];
 }
 
 export interface UniverseData {

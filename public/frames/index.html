@@ -326,6 +326,11 @@
         </div>
       </div>
 
+      <!-- Memory MP4 Video Container -->
+      <div class="memory-mp4-container" id="memory-mp4-container">
+        <!-- Rendered via JS when memory video is present -->
+      </div>
+
       <!-- Category Filter Pills -->
       <div class="filter-pills" id="memory-filter-pills">
         <button class="pill active" data-filter="all">All Chapters</button>
@@ -714,6 +719,7 @@
           <button class="admin-tab" data-tab="memories" onclick="switchAdminTab('memories')">📖 Memories</button>
           <button class="admin-tab" data-tab="letters" onclick="switchAdminTab('letters')">💌 Love Letters</button>
           <button class="admin-tab" data-tab="reasons" onclick="switchAdminTab('reasons')">💖 100 Reasons</button>
+          <button class="admin-tab" data-tab="promises" onclick="switchAdminTab('promises')">💍 Promises</button>
           <button class="admin-tab" data-tab="secret" onclick="switchAdminTab('secret')">🔐 Secret Room</button>
           <button class="admin-tab" data-tab="music" onclick="switchAdminTab('music')">🎵 Music</button>
           <button class="admin-tab" data-tab="backup" onclick="switchAdminTab('backup')">💾 Backup</button>
@@ -727,6 +733,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="script.js"></script>
 </body>
 </html>

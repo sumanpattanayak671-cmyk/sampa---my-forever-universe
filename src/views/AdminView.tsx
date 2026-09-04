@@ -119,9 +119,9 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size < 40MB
-    if (file.size > 40 * 1024 * 1024) {
-      alert('File size exceeds 40MB. Please choose a smaller file.');
+    // Check size < 100MB
+    if (file.size > 100 * 1024 * 1024) {
+      alert('File size exceeds 100MB. Please choose a smaller file.');
       return;
     }
 
@@ -832,6 +832,90 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
               <Plus className="h-4 w-4" />
               <span>Create New Memory</span>
             </button>
+          </div>
+
+          {/* Memory MP4 Dedicated Section (Multiple Videos) */}
+          <div className="rounded-[28px] border border-[#DED4C1] bg-[#FAF7F2] p-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="font-serif text-lg font-normal text-[#1A1A1A] flex items-center gap-2">
+                  <span>🎬 Memory MP4 Video Gallery</span>
+                </h3>
+                <p className="text-xs text-[#6B5B4A] font-sans">
+                  Upload multiple romantic video memories (.mp4, .webm, .mov) directly from your device.
+                </p>
+              </div>
+              <span className="text-[11px] font-mono font-semibold text-rose-700 bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200">
+                {(universe.settings.memoryVideos || (universe.settings.memoryVideoUrl ? [{ url: universe.settings.memoryVideoUrl }] : [])).length} Video(s) Active
+              </span>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <label className="cursor-pointer flex items-center justify-center gap-1.5 rounded-xl bg-[#1A1A1A] px-4 py-2 text-xs font-bold text-white hover:bg-[#333] transition-all">
+                <Upload className="h-3.5 w-3.5" />
+                <span>+ Upload Memory MP4 Video</span>
+                <input
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime,video/*"
+                  className="hidden"
+                  onChange={(e) =>
+                    handleFileUpload(e, (url) => {
+                      const currentList = universe.settings.memoryVideos || (universe.settings.memoryVideoUrl ? [{ id: 'vid-1', title: 'Our Memory in Motion', caption: 'Cherished moments in starlight.', url: universe.settings.memoryVideoUrl }] : []);
+                      const updated = [...currentList, { id: 'vid-' + Date.now(), title: 'Our Memory in Motion', caption: 'Cherished moments in starlight.', url }];
+                      saveSettings({ memoryVideos: updated, memoryVideoUrl: updated[0]?.url || '' });
+                    })
+                  }
+                />
+              </label>
+            </div>
+
+            {/* List of uploaded videos */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              {(universe.settings.memoryVideos || (universe.settings.memoryVideoUrl ? [{ id: 'vid-1', title: 'Our Memory in Motion', caption: 'Cherished moments in starlight.', url: universe.settings.memoryVideoUrl }] : [])).map((vid, idx) => (
+                <div key={vid.id || idx} className="rounded-2xl border border-[#DED4C1] bg-white p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#6B5B4A] uppercase tracking-wider">Video #{idx + 1}</span>
+                    <button
+                      onClick={() => {
+                        const currentList = universe.settings.memoryVideos || (universe.settings.memoryVideoUrl ? [{ id: 'vid-1', title: 'Our Memory in Motion', url: universe.settings.memoryVideoUrl }] : []);
+                        const updated = currentList.filter((_, i) => i !== idx);
+                        saveSettings({ memoryVideos: updated, memoryVideoUrl: updated[0]?.url || '' });
+                      }}
+                      className="text-xs text-rose-600 hover:text-rose-800 font-semibold"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Video Title"
+                    value={vid.title || ''}
+                    onChange={(e) => {
+                      const currentList = universe.settings.memoryVideos || (universe.settings.memoryVideoUrl ? [{ id: 'vid-1', title: 'Our Memory in Motion', url: universe.settings.memoryVideoUrl }] : []);
+                      const updated = [...currentList];
+                      updated[idx] = { ...updated[idx], title: e.target.value };
+                      saveSettings({ memoryVideos: updated });
+                    }}
+                    className="w-full rounded-xl border border-[#DED4C1] bg-[#FAF7F2] px-3 py-1.5 text-xs text-[#1A1A1A]"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Video Caption"
+                    value={vid.caption || ''}
+                    onChange={(e) => {
+                      const currentList = universe.settings.memoryVideos || (universe.settings.memoryVideoUrl ? [{ id: 'vid-1', title: 'Our Memory in Motion', url: universe.settings.memoryVideoUrl }] : []);
+                      const updated = [...currentList];
+                      updated[idx] = { ...updated[idx], caption: e.target.value };
+                      saveSettings({ memoryVideos: updated });
+                    }}
+                    className="w-full rounded-xl border border-[#DED4C1] bg-[#FAF7F2] px-3 py-1.5 text-xs text-[#1A1A1A]"
+                  />
+                  <div className="rounded-xl overflow-hidden bg-black max-h-48">
+                    <video src={vid.url} controls className="w-full max-h-48 object-contain" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {editingMemory && (

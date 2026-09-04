@@ -143,6 +143,16 @@
         tags: ['Breakfast', 'Cozy', 'Home', 'Pancakes'],
       },
     ],
+    memoryVideos: [
+      {
+        id: 'mem-vid-1',
+        title: 'Our Timeless Motion Chapter',
+        caption: 'Every motion, smile, and shared breath immortalized forever.',
+        url: '',
+        idbKey: '',
+        fileName: '',
+      },
+    ],
     letters: [
       {
         id: 'let-1',
@@ -241,8 +251,95 @@
       UNIVERSE = { ...DEFAULT_UNIVERSE, ...parsed };
       UNIVERSE.settings = { ...DEFAULT_UNIVERSE.settings, ...(parsed.settings || {}) };
       UNIVERSE.secretRoom = { ...DEFAULT_UNIVERSE.secretRoom, ...(parsed.secretRoom || {}) };
+      if (Array.isArray(parsed.memoryVideos)) {
+        UNIVERSE.memoryVideos = parsed.memoryVideos;
+      } else if (parsed.memoryVideo && (parsed.memoryVideo.idbKey || parsed.memoryVideo.url)) {
+        UNIVERSE.memoryVideos = [parsed.memoryVideo];
+      }
     } catch (e) {
       console.warn('Could not parse saved universe data, using defaults:', e);
+    }
+  }
+
+  // ------------------------------------------------------------------------
+  // 1b. SUPABASE REALTIME CLOUD INTEGRATION (INSTAGRAM-STYLE LIVE SYNC)
+  // ------------------------------------------------------------------------
+  const SUPABASE_URL = 'https://yvaeokluxlphnotexvlq.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2YWVva2x1eGxwaG5vdGV4dmxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MTU3MjUsImV4cCI6MjEwNDA5MTcyNX0.NXUfrXZ0nUM5j8iJEGGCqwXVXK9Axcf_xTubTdzIj7A';
+  let supabaseClient = null;
+
+  try {
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log('✨ Supabase Cloud client initialized!');
+    }
+  } catch (err) {
+    console.warn('Could not initialize Supabase client:', err);
+  }
+
+  async function uploadFileToSupabaseStorage(file, folder = 'media') {
+    if (!supabaseClient) return null;
+    try {
+      const cleanName = `${folder}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const { data, error } = await supabaseClient.storage.from('media').upload(cleanName, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+      if (error) {
+        console.warn('Supabase storage upload error:', error);
+        return null;
+      }
+      const { data: pubData } = supabaseClient.storage.from('media').getPublicUrl(cleanName);
+      return pubData ? pubData.publicUrl : null;
+    } catch (err) {
+      console.warn('Supabase storage exception:', err);
+      return null;
+    }
+  }
+
+  async function syncUniverseFromCloud() {
+    if (!supabaseClient) return;
+    try {
+      const { data, error } = await supabaseClient
+        .from('universe_data')
+        .select('data')
+        .eq('id', 'sampa_universe')
+        .maybeSingle();
+
+      if (data && data.data) {
+        const cloudData = data.data;
+        UNIVERSE = { ...DEFAULT_UNIVERSE, ...cloudData };
+        UNIVERSE.settings = { ...DEFAULT_UNIVERSE.settings, ...(cloudData.settings || {}) };
+        UNIVERSE.secretRoom = { ...DEFAULT_UNIVERSE.secretRoom, ...(cloudData.secretRoom || {}) };
+        if (Array.isArray(cloudData.memoryVideos)) {
+          UNIVERSE.memoryVideos = cloudData.memoryVideos;
+        }
+        await saveUniverseToDB(UNIVERSE);
+        renderAllComponents();
+        if (typeof updateTimer === 'function') updateTimer();
+        console.log('☁️ Synced fresh data from Supabase Cloud!');
+      }
+
+      // Realtime live subscription (Instagram style live sync!)
+      supabaseClient
+        .channel('realtime_universe_data')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'universe_data', filter: 'id=eq.sampa_universe' }, (payload) => {
+          if (payload.new && payload.new.data) {
+            const fresh = payload.new.data;
+            UNIVERSE = { ...DEFAULT_UNIVERSE, ...fresh };
+            UNIVERSE.settings = { ...DEFAULT_UNIVERSE.settings, ...(fresh.settings || {}) };
+            UNIVERSE.secretRoom = { ...DEFAULT_UNIVERSE.secretRoom, ...(fresh.secretRoom || {}) };
+            if (Array.isArray(fresh.memoryVideos)) {
+              UNIVERSE.memoryVideos = fresh.memoryVideos;
+            }
+            renderAllComponents();
+            if (typeof updateTimer === 'function') updateTimer();
+            showToast('✨ Live update received from the stars!');
+          }
+        })
+        .subscribe();
+    } catch (err) {
+      console.warn('Supabase sync failure:', err);
     }
   }
 
@@ -304,9 +401,10 @@
   // 2b. HIGH-CAPACITY STORAGE ENGINE (IndexedDB - Unlimited Quota)
   // ------------------------------------------------------------------------
   const MASTER_DB_NAME = 'sampa_universe_master_db';
-  const MASTER_DB_VERSION = 1;
+  const MASTER_DB_VERSION = 2;
   const DATA_STORE = 'universe_data_store';
   const AUDIO_STORE = 'audio_tracks';
+  const VIDEO_STORE = 'video_tracks';
 
   function openMasterDB() {
     return new Promise((resolve, reject) => {
@@ -318,6 +416,9 @@
         }
         if (!db.objectStoreNames.contains(AUDIO_STORE)) {
           db.createObjectStore(AUDIO_STORE);
+        }
+        if (!db.objectStoreNames.contains(VIDEO_STORE)) {
+          db.createObjectStore(VIDEO_STORE);
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -360,9 +461,10 @@
   async function clearUniverseDB() {
     try {
       const db = await openMasterDB();
-      const tx = db.transaction([DATA_STORE, AUDIO_STORE], 'readwrite');
+      const tx = db.transaction([DATA_STORE, AUDIO_STORE, VIDEO_STORE], 'readwrite');
       tx.objectStore(DATA_STORE).clear();
       tx.objectStore(AUDIO_STORE).clear();
+      tx.objectStore(VIDEO_STORE).clear();
     } catch (err) {
       console.warn('Clear DB failed:', err);
     }
@@ -429,6 +531,69 @@
       }
     }
     return track.url || '';
+  }
+
+  async function saveVideoBlob(key, blob) {
+    try {
+      const db = await openMasterDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(VIDEO_STORE, 'readwrite');
+        const store = tx.objectStore(VIDEO_STORE);
+        const req = store.put(blob, key);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+      console.warn('saveVideoBlob error:', e);
+    }
+  }
+
+  async function getVideoBlob(key) {
+    try {
+      const db = await openMasterDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(VIDEO_STORE, 'readonly');
+        const store = tx.objectStore(VIDEO_STORE);
+        const req = store.get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (e) {
+      console.warn('getVideoBlob error:', e);
+      return null;
+    }
+  }
+
+  async function deleteVideoBlob(key) {
+    try {
+      const db = await openMasterDB();
+      const tx = db.transaction(VIDEO_STORE, 'readwrite');
+      tx.objectStore(VIDEO_STORE).delete(key);
+    } catch (e) {
+      console.warn('deleteVideoBlob error:', e);
+    }
+  }
+
+  const videoObjectUrls = {};
+
+  async function resolveMemoryVideoUrl(videoData) {
+    if (!videoData) return '';
+    if (videoData.idbKey) {
+      try {
+        if (videoObjectUrls[videoData.idbKey]) {
+          return videoObjectUrls[videoData.idbKey];
+        }
+        const blob = await getVideoBlob(videoData.idbKey);
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          videoObjectUrls[videoData.idbKey] = url;
+          return url;
+        }
+      } catch (e) {
+        console.warn('Could not read video from IndexedDB, falling back to url', e);
+      }
+    }
+    return videoData.url || '';
   }
 
   function getAudioDuration(file) {
@@ -737,7 +902,8 @@
       `).join('');
     }
 
-    // 6. Memories Grid
+    // 6. Memories Grid & Memory MP4 Video
+    renderMemoryVideo();
     renderMemoriesGrid('all');
 
     // 7. Letters Vault
@@ -830,6 +996,65 @@
     }
   }
 
+  async function renderMemoryVideo() {
+    const container = document.getElementById('memory-mp4-container');
+    if (!container) return;
+
+    const list = Array.isArray(UNIVERSE.memoryVideos)
+      ? UNIVERSE.memoryVideos
+      : (UNIVERSE.memoryVideo ? [UNIVERSE.memoryVideo] : []);
+
+    const activeVideos = list.filter((v) => v && (v.idbKey || v.url));
+    if (activeVideos.length === 0) {
+      container.innerHTML = '';
+      container.style.display = 'none';
+      return;
+    }
+
+    const resolved = await Promise.all(
+      activeVideos.map(async (v) => {
+        const src = await resolveMemoryVideoUrl(v);
+        return src ? { ...v, src } : null;
+      })
+    );
+    const validVideos = resolved.filter(Boolean);
+
+    if (validVideos.length === 0) {
+      container.innerHTML = '';
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'block';
+    container.innerHTML = `
+      <div class="memory-mp4-header">
+        <div class="memory-mp4-badge">
+          <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+          <span>ROMANTIC MOTION ARCHIVE // ${validVideos.length > 1 ? validVideos.length + ' MEMORY VIDEOS' : 'MEMORY MP4'}</span>
+        </div>
+        <h3 class="memory-mp4-title">Our Memories in Motion</h3>
+        <p class="memory-mp4-caption">“Living moments captured in time, shining forever in our cosmic sanctuary.”</p>
+      </div>
+
+      <div class="memory-mp4-grid">
+        ${validVideos.map((vid, idx) => `
+          <div class="memory-mp4-card glass-card">
+            <div class="memory-mp4-card-header">
+              <span class="memory-mp4-card-num">MOTION CHAPTER #${idx + 1}</span>
+              <h4 class="memory-mp4-card-title">${vid.title || 'Our Romantic Story in Motion'}</h4>
+              ${vid.caption ? `<p class="memory-mp4-card-desc">“${vid.caption}”</p>` : ''}
+            </div>
+            <div class="memory-mp4-video-wrap">
+              <video class="memory-mp4-video" controls playsinline preload="metadata" src="${vid.src}">
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
   function renderMemoriesGrid(filter = 'all') {
     const memGrid = document.getElementById('memories-grid');
     if (!memGrid) return;
@@ -882,9 +1107,20 @@
       UNIVERSE = { ...DEFAULT_UNIVERSE, ...saved };
       UNIVERSE.settings = { ...DEFAULT_UNIVERSE.settings, ...(saved.settings || {}) };
       UNIVERSE.secretRoom = { ...DEFAULT_UNIVERSE.secretRoom, ...(saved.secretRoom || {}) };
+      if (Array.isArray(saved.memoryVideos)) {
+        UNIVERSE.memoryVideos = saved.memoryVideos;
+      } else if (saved.memoryVideo && (saved.memoryVideo.idbKey || saved.memoryVideo.url)) {
+        UNIVERSE.memoryVideos = [saved.memoryVideo];
+      } else {
+        UNIVERSE.memoryVideos = DEFAULT_UNIVERSE.memoryVideos || [];
+      }
       renderAllComponents();
       if (typeof updateTimer === 'function') updateTimer();
       loadTrack(currentTrackIdx);
+    }
+    // Live Cloud Sync from Supabase (Instagram-style sync across all devices!)
+    if (typeof syncUniverseFromCloud === 'function') {
+      syncUniverseFromCloud();
     }
   });
 
@@ -1348,6 +1584,9 @@
       case 'reasons':
         renderAdminReasons(bodyEl);
         break;
+      case 'promises':
+        renderAdminPromises(bodyEl);
+        break;
       case 'secret':
         renderAdminSecret(bodyEl);
         break;
@@ -1560,6 +1799,85 @@
           <button class="btn btn-secondary btn-sm" onclick="addNewMemory()">+ Add New Chapter</button>
         </h3>
 
+        <!-- 🎬 Memory MP4 Multiple Videos Management Card -->
+        <div class="admin-item-card" style="flex-direction: column; background: rgba(244, 63, 94, 0.06); border: 1px solid rgba(244, 63, 94, 0.3); margin-bottom: 24px; padding: 20px; border-radius: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+            <div style="display:flex; align-items:center; gap: 10px;">
+              <span style="font-size: 22px;">🎬</span>
+              <div>
+                <div style="font-weight: 700; font-size: 15px; color: #fff;">Memory MP4 Video Gallery (Multiple Videos)</div>
+                <div style="font-size: 12px; color: var(--text-secondary);">Upload multiple romantic video memories (.mp4, .webm, .mov) directly from your device (phone/PC).</div>
+              </div>
+            </div>
+            <div style="display:flex; gap: 8px; align-items:center;">
+              <span style="font-size: 11px; padding: 4px 12px; background: rgba(244, 63, 94, 0.2); border: 1px solid rgba(244, 63, 94, 0.4); color: #ff758f; border-radius: 100px; font-weight: 600;">
+                ${(UNIVERSE.memoryVideos || []).length} Video(s)
+              </span>
+            </div>
+          </div>
+
+          <!-- Video Multi-Upload Actions -->
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 16px;">
+            <label class="btn btn-primary" style="cursor: pointer; display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px;">
+              <svg class="icon-xs" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+              <span>+ Upload Memory MP4 Videos (Select 1 or More)</span>
+              <input type="file" multiple accept="video/mp4,video/webm,video/quicktime,video/*" style="display:none;" onchange="handleMemoryVideosMultiUpload(this.files)">
+            </label>
+            <button class="btn btn-secondary" onclick="addNewMemoryVideoSlot()" style="padding: 10px 16px;">
+              + Add Video by URL
+            </button>
+            <span style="font-size: 11px; color: var(--text-secondary);">
+              Saved in high-capacity storage without quota errors!
+            </span>
+          </div>
+
+          <!-- Video Items List -->
+          <div style="display:flex; flex-direction:column; gap: 16px; width: 100%;">
+            ${(UNIVERSE.memoryVideos && UNIVERSE.memoryVideos.length > 0) ? UNIVERSE.memoryVideos.map((v, idx) => `
+              <div class="admin-item-card" style="flex-direction: column; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 16px; border-radius: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px;">
+                  <span style="font-size: 12px; font-weight: 700; color: var(--accent-rose); letter-spacing: 0.08em; text-transform: uppercase;">
+                    🎬 Video #${idx + 1} ${(v.fileName ? `• ${v.fileName}` : '')}
+                  </span>
+                  <button class="admin-delete-btn" onclick="removeMemoryVideoItem('${v.id}')">Delete Video</button>
+                </div>
+
+                <div class="admin-grid-2" style="margin-bottom: 10px;">
+                  <div>
+                    <label class="admin-label">Video Title</label>
+                    <input type="text" class="admin-input" value="${v.title || ''}" placeholder="e.g. Our First Trip Video" oninput="updateMemoryVideoItem('${v.id}', 'title', this.value)">
+                  </div>
+                  <div>
+                    <label class="admin-label">Direct Video URL (Optional external link)</label>
+                    <input type="text" class="admin-input" value="${v.url || ''}" placeholder="https://..." oninput="updateMemoryVideoItem('${v.id}', 'url', this.value)">
+                  </div>
+                </div>
+
+                <div style="margin-bottom: 10px;">
+                  <label class="admin-label">Romantic Caption / Story</label>
+                  <input type="text" class="admin-input" value="${v.caption || ''}" placeholder="Short romantic caption for this video" oninput="updateMemoryVideoItem('${v.id}', 'caption', this.value)">
+                </div>
+
+                <div style="display:flex; gap: 10px; align-items:center; flex-wrap: wrap;">
+                  <label class="btn btn-outline btn-sm" style="cursor: pointer; padding: 6px 14px; font-size: 11px;">
+                    🔄 Replace This Video File
+                    <input type="file" accept="video/mp4,video/webm,video/quicktime,video/*" style="display:none;" onchange="replaceMemoryVideoFile('${v.id}', this.files[0])">
+                  </label>
+                  <span style="font-size: 11px; color: var(--text-secondary);">
+                    ${v.idbKey ? '✓ Stored in high-capacity storage' : (v.url ? '✓ Linked via URL' : 'Pending video source')}
+                  </span>
+                </div>
+
+                <div id="admin-mem-vid-preview-${v.id}" style="margin-top: 10px;"></div>
+              </div>
+            `).join('') : `
+              <div style="padding: 24px; text-align: center; color: var(--text-muted); font-size: 13px; border: 1px dashed rgba(255,255,255,0.12); border-radius: 14px;">
+                No memory videos uploaded yet. Click "+ Upload Memory MP4 Videos" above to add romantic videos!
+              </div>
+            `}
+          </div>
+        </div>
+
         ${UNIVERSE.memories.map((m) => `
           <div class="admin-item-card" style="flex-direction: column;">
             <div style="display:flex; width:100%; gap: 16px; align-items: flex-start;">
@@ -1593,6 +1911,24 @@
         `).join('')}
       </div>
     `;
+
+    // Asynchronously resolve previews for all videos
+    if (Array.isArray(UNIVERSE.memoryVideos)) {
+      UNIVERSE.memoryVideos.forEach((v) => {
+        if (v.idbKey || v.url) {
+          resolveMemoryVideoUrl(v).then((src) => {
+            const el = document.getElementById(`admin-mem-vid-preview-${v.id}`);
+            if (el && src) {
+              el.innerHTML = `
+                <div style="border-radius: 12px; overflow: hidden; background: #000; max-width: 480px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 6px 20px rgba(0,0,0,0.5);">
+                  <video src="${src}" controls style="width: 100%; max-height: 240px; display: block; object-fit: contain;"></video>
+                </div>
+              `;
+            }
+          });
+        }
+      });
+    }
   }
 
   window.handleMemoryPhotoUpload = async (memId, file) => {
@@ -1643,6 +1979,136 @@
       UNIVERSE.memories = UNIVERSE.memories.filter((m) => m.id !== id);
       window.saveAllUniverseData();
       window.switchAdminTab('memories');
+    }
+  };
+
+  window.handleMemoryVideosMultiUpload = async (files) => {
+    if (!files || files.length === 0) return;
+    showToast(`Uploading ${files.length} video(s)...`);
+
+    if (!Array.isArray(UNIVERSE.memoryVideos)) {
+      UNIVERSE.memoryVideos = [];
+    }
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      try {
+        let publicCloudUrl = null;
+        // Try uploading directly to Supabase Storage for global instant playback
+        if (supabaseClient) {
+          showToast(`Uploading "${file.name}" to Cloud...`);
+          publicCloudUrl = await uploadFileToSupabaseStorage(file, 'videos');
+        }
+
+        const vidKey = 'mem_vid_' + Date.now() + '_' + i;
+        if (!publicCloudUrl) {
+          // Fallback to high-capacity local IndexedDB
+          await saveVideoBlob(vidKey, file);
+        }
+
+        const newVid = {
+          id: 'vid-' + Date.now() + '-' + i,
+          title: file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ') || 'Our Memory in Motion',
+          caption: 'A moving glimpse of our love preserved in starlight.',
+          url: publicCloudUrl || '',
+          idbKey: publicCloudUrl ? '' : vidKey,
+          fileName: file.name,
+        };
+        UNIVERSE.memoryVideos.push(newVid);
+      } catch (err) {
+        console.error('Error uploading video:', file.name, err);
+      }
+    }
+
+    await window.saveAllUniverseData();
+    renderAllComponents();
+    window.switchAdminTab('memories');
+    showToast(`🎬 ${files.length} Memory MP4 video(s) uploaded successfully!`);
+  };
+
+  window.addNewMemoryVideoSlot = () => {
+    if (!Array.isArray(UNIVERSE.memoryVideos)) {
+      UNIVERSE.memoryVideos = [];
+    }
+    UNIVERSE.memoryVideos.push({
+      id: 'vid-' + Date.now(),
+      title: 'Our Romantic Memory in Motion',
+      caption: 'Every motion, smile, and shared breath immortalized forever.',
+      url: '',
+      idbKey: '',
+      fileName: '',
+    });
+    window.saveAllUniverseData();
+    window.switchAdminTab('memories');
+  };
+
+  window.removeMemoryVideoItem = async (id) => {
+    if (!confirm('Remove this Memory MP4 video?')) return;
+    if (!Array.isArray(UNIVERSE.memoryVideos)) return;
+
+    const vid = UNIVERSE.memoryVideos.find((v) => v.id === id);
+    if (vid && vid.idbKey) {
+      await deleteVideoBlob(vid.idbKey);
+      if (videoObjectUrls[vid.idbKey]) {
+        URL.revokeObjectURL(videoObjectUrls[vid.idbKey]);
+        delete videoObjectUrls[vid.idbKey];
+      }
+    }
+
+    UNIVERSE.memoryVideos = UNIVERSE.memoryVideos.filter((v) => v.id !== id);
+    await window.saveAllUniverseData();
+    renderAllComponents();
+    window.switchAdminTab('memories');
+    showToast('Memory MP4 video removed.');
+  };
+
+  window.replaceMemoryVideoFile = async (id, file) => {
+    if (!file) return;
+    try {
+      showToast('Replacing video...');
+      if (!Array.isArray(UNIVERSE.memoryVideos)) return;
+      const vid = UNIVERSE.memoryVideos.find((v) => v.id === id);
+      if (!vid) return;
+
+      if (vid.idbKey) {
+        await deleteVideoBlob(vid.idbKey);
+        if (videoObjectUrls[vid.idbKey]) {
+          URL.revokeObjectURL(videoObjectUrls[vid.idbKey]);
+          delete videoObjectUrls[vid.idbKey];
+        }
+      }
+
+      let publicCloudUrl = null;
+      if (supabaseClient) {
+        showToast('Uploading new video to Cloud...');
+        publicCloudUrl = await uploadFileToSupabaseStorage(file, 'videos');
+      }
+
+      if (publicCloudUrl) {
+        vid.url = publicCloudUrl;
+        vid.idbKey = '';
+      } else {
+        const vidKey = 'mem_vid_' + Date.now();
+        await saveVideoBlob(vidKey, file);
+        vid.idbKey = vidKey;
+        vid.url = '';
+      }
+      vid.fileName = file.name;
+
+      await window.saveAllUniverseData();
+      renderAllComponents();
+      window.switchAdminTab('memories');
+    } catch (err) {
+      alert('Replace video failed: ' + err.message);
+    }
+  };
+
+  window.updateMemoryVideoItem = (id, field, value) => {
+    if (!Array.isArray(UNIVERSE.memoryVideos)) return;
+    const vid = UNIVERSE.memoryVideos.find((v) => v.id === id);
+    if (vid) {
+      vid[field] = value;
+      renderAllComponents();
     }
   };
 
@@ -1763,6 +2229,83 @@
       UNIVERSE.reasons = UNIVERSE.reasons.filter((r) => r.id !== id);
       window.saveAllUniverseData();
       window.switchAdminTab('reasons');
+    }
+  };
+
+  // --- TAB: PROMISES (Promises Written in Stardust) ---
+  function renderAdminPromises(container) {
+    container.innerHTML = `
+      <div class="admin-form-card">
+        <h3 class="admin-section-title">
+          <span>💍 Promises Written in Stardust</span>
+          <button class="btn btn-secondary btn-sm" onclick="addNewPromise()">+ Add New Promise</button>
+        </h3>
+        <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 20px;">
+          These sacred lifelong promises and vows are displayed on the public website under "Promises Written in Stardust".
+        </p>
+
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          ${(UNIVERSE.promises || []).map((p, idx) => `
+            <div class="admin-item-card" style="flex-direction: column; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 18px; border-radius: 18px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 10px;">
+                <span style="font-size: 12px; font-weight: 700; color: var(--accent-gold); letter-spacing: 0.1em; text-transform: uppercase;">
+                  💍 SACRED PROMISE #${idx + 1}
+                </span>
+                <button class="admin-delete-btn" onclick="deletePromise('${p.id}')">Delete Promise</button>
+              </div>
+
+              <div class="admin-grid-2" style="margin-bottom: 10px;">
+                <div>
+                  <label class="admin-label">Promise Title / Vow Headline</label>
+                  <input type="text" class="admin-input" value="${p.title || ''}" placeholder="e.g. To always listen with an open, tender heart" oninput="updatePromiseField('${p.id}', 'title', this.value)">
+                </div>
+                <div>
+                  <label class="admin-label">Status Badge (e.g. FOREVER / ALWAYS / KEPT)</label>
+                  <input type="text" class="admin-input" value="${p.status || 'forever'}" placeholder="FOREVER, ALWAYS, or KEPT" oninput="updatePromiseField('${p.id}', 'status', this.value)">
+                </div>
+              </div>
+
+              <div>
+                <label class="admin-label">Vow Description / Romantic Commitment</label>
+                <textarea class="admin-textarea" style="min-height: 70px;" placeholder="Write down your heartfelt promise here..." oninput="updatePromiseField('${p.id}', 'desc', this.value)">${p.desc || ''}</textarea>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  window.updatePromiseField = (id, field, value) => {
+    if (!Array.isArray(UNIVERSE.promises)) return;
+    const p = UNIVERSE.promises.find((item) => item.id === id);
+    if (p) {
+      p[field] = value;
+      renderAllComponents();
+    }
+  };
+
+  window.addNewPromise = () => {
+    if (!Array.isArray(UNIVERSE.promises)) {
+      UNIVERSE.promises = [];
+    }
+    UNIVERSE.promises.push({
+      id: 'prom-' + Date.now(),
+      title: 'To cherish and hold your hand through every chapter of life',
+      status: 'forever',
+      desc: 'Through every sunrise and every midnight star, my heart will remain devoted entirely to you.',
+    });
+    window.saveAllUniverseData();
+    window.switchAdminTab('promises');
+    showToast('💍 New promise added to Stardust!');
+  };
+
+  window.deletePromise = (id) => {
+    if (confirm('Delete this sacred promise?')) {
+      UNIVERSE.promises = UNIVERSE.promises.filter((p) => p.id !== id);
+      window.saveAllUniverseData();
+      window.switchAdminTab('promises');
+      showToast('Promise removed.');
     }
   };
 
@@ -2080,7 +2623,25 @@
       // 1. Save to high-capacity IndexedDB (Unlimited quota for all photos & custom content!)
       await saveUniverseToDB(UNIVERSE);
 
-      // 2. Safe localStorage cache without throwing quota errors
+      // 2. Sync to Supabase Cloud Database (Live across all devices without reload!)
+      let cloudSynced = false;
+      if (supabaseClient) {
+        try {
+          const { error } = await supabaseClient
+            .from('universe_data')
+            .upsert({ id: 'sampa_universe', data: UNIVERSE, updated_at: new Date().toISOString() });
+          if (!error) {
+            cloudSynced = true;
+            console.log('☁️ Synced to Supabase Cloud live!');
+          } else {
+            console.warn('Supabase save warning:', error);
+          }
+        } catch (cloudErr) {
+          console.warn('Supabase save error:', cloudErr);
+        }
+      }
+
+      // 3. Safe localStorage cache without throwing quota errors
       try {
         localStorage.setItem('sampa_universe_data', JSON.stringify(UNIVERSE));
       } catch (storageErr) {
@@ -2089,7 +2650,11 @@
       }
 
       renderAllComponents();
-      showToast('✨ All universe changes saved safely!');
+      if (cloudSynced) {
+        showToast('☁️ Saved to Cloud & Live for Sampa!');
+      } else {
+        showToast('✨ Changes saved locally!');
+      }
     } catch (e) {
       console.error('Save error:', e);
       renderAllComponents();
