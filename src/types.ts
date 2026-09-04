@@ -90,6 +90,8 @@ export interface MemoryVideoItem {
   title: string;
   caption?: string;
   url: string;
+  idbKey?: string;
+  fileName?: string;
 }
 
 export interface SiteSettings {
@@ -113,6 +115,7 @@ export interface UniverseData {
   promises: PromiseItem[];
   plans: FuturePlan[];
   music: MusicTrack[];
+  memoryVideos?: MemoryVideoItem[];
   secretRoom?: {
     hint: string;
     hasUnlockedContent?: boolean;

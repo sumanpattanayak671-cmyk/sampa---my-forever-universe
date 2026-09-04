@@ -42,19 +42,41 @@ export default function App() {
   const [activeLetter, setActiveLetter] = useState<LoveLetter | null>(null);
   const [activeShareMemory, setActiveShareMemory] = useState<Memory | null>(null);
 
-  // Fetch live universe data from server
+  // Fetch live universe data from Supabase Cloud
   const fetchUniverse = useCallback(async () => {
     try {
       setLoading(true);
       setFetchError(null);
-      const res = await fetch('/api/universe');
-      if (!res.ok) throw new Error('Failed to load universe data');
-      const json: UniverseData = await res.json();
-      setData(json);
+
+      const SUPABASE_URL = 'https://yvaeokluxlphnotexvlq.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2YWVva2x1eGxwaG5vdGV4dmxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MTU3MjUsImV4cCI6MjEwNDA5MTcyNX0.NXUfrXZ0nUM5j8iJEGGCqwXVXK9Axcf_xTubTdzIj7A';
+
+      try {
+        const cloudRes = await fetch(`${SUPABASE_URL}/rest/v1/universe_data?id=eq.sampa_universe`, {
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+        });
+        if (cloudRes.ok) {
+          const rows = await cloudRes.json();
+          if (rows && rows.length > 0 && rows[0].data) {
+            setData(rows[0].data);
+            return;
+          }
+        }
+      } catch (cloudErr) {
+        console.warn('Supabase fetch failed, using seeded data:', cloudErr);
+      }
+
+      // Optional fallback to local express server
+      const localRes = await fetch('/api/universe').catch(() => null);
+      if (localRes && localRes.ok) {
+        const json: UniverseData = await localRes.json();
+        setData(json);
+      }
     } catch (err: any) {
-      console.warn('Using seeded data; server fetch notice:', err.message);
-      // Keep existing data, show banner if needed
-      setFetchError('Offline or server updating. Showing offline cached universe.');
+      console.warn('Using seeded data:', err.message);
     } finally {
       setLoading(false);
     }
@@ -297,12 +319,6 @@ export default function App() {
           currentTrack={data.music[currentTrackIndex]}
         />
 
-        {/* Optional Offline/Sync banner */}
-        {fetchError && (
-          <div className="mx-auto max-w-5xl px-4 pt-3 w-full">
-            <ErrorRetryBanner message={fetchError} onRetry={fetchUniverse} />
-          </div>
-        )}
 
         {/* View Body */}
         <main className="flex-1 w-full">{renderView()}</main>

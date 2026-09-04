@@ -8,6 +8,7 @@ import {
   UniverseData, Photo, Memory, LoveLetter, Reason, PromiseItem, FuturePlan,
   MusicTrack, SecretRoomData, SiteSettings
 } from '../types';
+import { INITIAL_UNIVERSE, INITIAL_SECRET_ROOM } from '../initialData';
 
 interface AdminViewProps {
   onDataUpdated: () => void;
@@ -55,16 +56,41 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
   const fetchAdminData = async (authToken: string) => {
     setLoadingData(true);
     try {
+      // 1. Fetch from Supabase Cloud
+      const SUPABASE_URL = 'https://yvaeokluxlphnotexvlq.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2YWVva2x1eGxwaG5vdGV4dmxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MTU3MjUsImV4cCI6MjEwNDA5MTcyNX0.NXUfrXZ0nUM5j8iJEGGCqwXVXK9Axcf_xTubTdzIj7A';
+
+      try {
+        const cloudRes = await fetch(`${SUPABASE_URL}/rest/v1/universe_data?id=eq.sampa_universe`, {
+          headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+        });
+        if (cloudRes.ok) {
+          const rows = await cloudRes.json();
+          if (rows && rows.length > 0 && rows[0].data) {
+            setAdminData({
+              universe: rows[0].data,
+              secretRoom: rows[0].data.secretRoom || INITIAL_SECRET_ROOM,
+            });
+            return;
+          }
+        }
+      } catch (cloudErr) {
+        console.warn('Supabase admin fetch failed:', cloudErr);
+      }
+
+      // 2. Fallback to /api/admin/data if local server
       const res = await fetch('/api/admin/data', {
         headers: { Authorization: `Bearer ${authToken}` },
-      });
-      if (res.status === 401) {
-        setToken(null);
-        localStorage.removeItem('admin_token');
-        return;
+      }).catch(() => null);
+      if (res && res.ok) {
+        const data = await res.json();
+        setAdminData(data);
+      } else {
+        setAdminData({
+          universe: INITIAL_UNIVERSE,
+          secretRoom: INITIAL_SECRET_ROOM,
+        });
       }
-      const data = await res.json();
-      setAdminData(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -84,21 +110,38 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
     setLoginError(null);
 
     try {
+      // Direct SHA-256 client authentication for Suman@305
+      const buf = new TextEncoder().encode(loginPassword.trim());
+      const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+      const hash = Array.from(new Uint8Array(hashBuf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+
+      if (hash === '60bf237a8e760b9bf28d82a7a09df954a27bbf83278bead64fcc71a9efabb9ec') {
+        const sessionToken = 'admin_session_' + Date.now();
+        localStorage.setItem('admin_token', sessionToken);
+        setToken(sessionToken);
+        setLoginPassword('');
+        return;
+      }
+
+      // Optional fallback to /api/admin/login
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: loginPassword }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        setLoginError(data.error || 'Invalid credentials');
-      } else {
-        localStorage.setItem('admin_token', data.token);
-        setToken(data.token);
-        setLoginPassword('');
+      }).catch(() => null);
+
+      if (res && res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          localStorage.setItem('admin_token', data.token);
+          setToken(data.token);
+          setLoginPassword('');
+          return;
+        }
       }
+      setLoginError('Invalid password. Please try again.');
     } catch (err) {
-      setLoginError('Server connection error. Please try again.');
+      setLoginError('Authentication failed.');
     } finally {
       setIsLoggingIn(false);
     }
