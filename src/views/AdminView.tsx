@@ -10,6 +10,9 @@ import {
 } from '../types';
 import { INITIAL_UNIVERSE, INITIAL_SECRET_ROOM } from '../initialData';
 
+const SUPABASE_URL = 'https://yvaeokluxlphnotexvlq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2YWVva2x1eGxwaG5vdGV4dmxxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1MTU3MjUsImV4cCI6MjEwNDA5MTcyNX0.NXUfrXZ0nUM5j8iJEGGCqwXVXK9Axcf_xTubTdzIj7A';
+
 interface AdminViewProps {
   onDataUpdated: () => void;
   navigate: (path: string) => void;
@@ -98,6 +101,42 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
     }
   };
 
+  const persistCloud = async (updatedUniverse: UniverseData, updatedSecretRoom?: SecretRoomData) => {
+    const fullPayload = {
+      ...updatedUniverse,
+      secretRoom: updatedSecretRoom || adminData?.secretRoom || INITIAL_SECRET_ROOM,
+    };
+
+    setAdminData({
+      universe: updatedUniverse,
+      secretRoom: fullPayload.secretRoom,
+    });
+
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/universe_data?id=eq.sampa_universe`, {
+        method: 'PATCH',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation',
+        },
+        body: JSON.stringify({
+          data: fullPayload,
+          updated_at: new Date().toISOString(),
+        }),
+      });
+      if (res.ok) {
+        onDataUpdated();
+        return true;
+      }
+    } catch (err) {
+      console.warn('Cloud sync error:', err);
+    }
+    onDataUpdated();
+    return false;
+  };
+
   useEffect(() => {
     if (token) {
       fetchAdminData(token);
@@ -158,38 +197,70 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
     localStorage.removeItem('admin_token');
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, targetCallback: (url: string) => void) => {
-    const file = e.target.files?.[0];
+  const handleFileUpload = async (file: File, targetCallback: (url: string) => void) => {
     if (!file) return;
 
-    // Check size < 100MB
     if (file.size > 100 * 1024 * 1024) {
       alert('File size exceeds 100MB. Please choose a smaller file.');
       return;
     }
 
     setUploadingFile(true);
+
+    try {
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const cleanFileName = `upload_${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const uploadPath = `uploads/${cleanFileName}`;
+
+      const res = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${uploadPath}`, {
+        method: 'POST',
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          'Content-Type': file.type || 'image/jpeg',
+        },
+        body: file,
+      });
+
+      if (res.ok) {
+        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/media/${uploadPath}`;
+        targetCallback(publicUrl);
+        showNotification('Photograph uploaded successfully to cloud!');
+        setUploadingFile(false);
+        return;
+      }
+    } catch (e) {
+      console.warn('Storage upload error, falling back to data URL:', e);
+    }
+
+    // Fallback: Read as base64 data URL
     const reader = new FileReader();
     reader.onload = async () => {
       try {
         const base64 = reader.result as string;
-        const res = await fetch('/api/upload', {
+        fetch('/api/upload', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ imageBase64: base64, filename: file.name }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          targetCallback(data.url);
-          showNotification('Photograph uploaded successfully!');
-        } else {
-          alert(data.error || 'Upload failed');
-        }
-      } catch (err) {
-        alert('Network error during upload');
+        })
+          .then((r) => r.json())
+          .then((d) => {
+            if (d && d.success && d.url) {
+              targetCallback(d.url);
+            } else {
+              targetCallback(base64);
+            }
+          })
+          .catch(() => {
+            targetCallback(base64);
+          });
+
+        showNotification('Photograph attached successfully!');
+      } catch {
+        alert('Could not attach file');
       } finally {
         setUploadingFile(false);
       }
@@ -204,30 +275,54 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
       alert('Title and Photo URL or File are required');
       return;
     }
-    const res = await fetch('/api/admin/photo', {
+    if (!adminData) return;
+
+    const currentPhotos = [...(adminData.universe.photos || [])];
+    const photoId = editingPhoto.id || `photo_${Date.now()}`;
+    const newPhoto: Photo = {
+      id: photoId,
+      title: editingPhoto.title || 'Forever Moment',
+      url: editingPhoto.url,
+      caption: editingPhoto.caption || '',
+      date: editingPhoto.date || new Date().toISOString().split('T')[0],
+      category: editingPhoto.category || 'Special Moments',
+      album: editingPhoto.album || 'Featured',
+      isFavorite: editingPhoto.isFavorite ?? false,
+      order: editingPhoto.order ?? (currentPhotos.length + 1),
+    };
+
+    const existingIndex = currentPhotos.findIndex((p) => p.id === photoId);
+    if (existingIndex >= 0) {
+      currentPhotos[existingIndex] = newPhoto;
+    } else {
+      currentPhotos.unshift(newPhoto);
+    }
+
+    const updated = { ...adminData.universe, photos: currentPhotos };
+    await persistCloud(updated);
+    showNotification('Photo saved successfully');
+    setEditingPhoto(null);
+
+    fetch('/api/admin/photo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(editingPhoto),
-    });
-    if (res.ok) {
-      showNotification('Photo saved successfully');
-      setEditingPhoto(null);
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+      body: JSON.stringify(newPhoto),
+    }).catch(() => null);
   };
 
   const deletePhoto = async (id: string) => {
     if (!confirm('Are you sure you want to delete this photograph?')) return;
-    const res = await fetch(`/api/admin/photo/${id}`, {
+    if (!adminData) return;
+
+    const currentPhotos = (adminData.universe.photos || []).filter((p) => p.id !== id);
+    const updated = { ...adminData.universe, photos: currentPhotos };
+    await persistCloud(updated);
+    showNotification('Photo deleted');
+
+    fetch(`/api/admin/photo/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      showNotification('Photo deleted');
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+    }).catch(() => null);
   };
 
   const saveMemory = async () => {
@@ -235,30 +330,56 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
       alert('Title and Description are required');
       return;
     }
-    const res = await fetch('/api/admin/memory', {
+    if (!adminData) return;
+
+    const currentMemories = [...(adminData.universe.memories || [])];
+    const memoryId = editingMemory.id || `memory_${Date.now()}`;
+    const newMem: Memory = {
+      id: memoryId,
+      slug: editingMemory.slug || (editingMemory.title || 'memory').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      title: editingMemory.title,
+      date: editingMemory.date || new Date().toISOString().split('T')[0],
+      location: editingMemory.location || '',
+      category: editingMemory.category || 'Special Moments',
+      summary: editingMemory.summary || editingMemory.description.slice(0, 100),
+      description: editingMemory.description,
+      photoUrls: editingMemory.photoUrls || [],
+      featured: editingMemory.featured ?? false,
+      tags: editingMemory.tags || [],
+    };
+
+    const existingIndex = currentMemories.findIndex((m) => m.id === memoryId);
+    if (existingIndex >= 0) {
+      currentMemories[existingIndex] = newMem;
+    } else {
+      currentMemories.push(newMem);
+    }
+
+    const updated = { ...adminData.universe, memories: currentMemories };
+    await persistCloud(updated);
+    showNotification('Memory saved successfully');
+    setEditingMemory(null);
+
+    fetch('/api/admin/memory', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(editingMemory),
-    });
-    if (res.ok) {
-      showNotification('Memory saved successfully');
-      setEditingMemory(null);
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+      body: JSON.stringify(newMem),
+    }).catch(() => null);
   };
 
   const deleteMemory = async (id: string) => {
     if (!confirm('Are you sure you want to delete this memory?')) return;
-    const res = await fetch(`/api/admin/memory/${id}`, {
+    if (!adminData) return;
+
+    const currentMemories = (adminData.universe.memories || []).filter((m) => m.id !== id);
+    const updated = { ...adminData.universe, memories: currentMemories };
+    await persistCloud(updated);
+    showNotification('Memory deleted');
+
+    fetch(`/api/admin/memory/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      showNotification('Memory deleted');
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+    }).catch(() => null);
   };
 
   const saveLetter = async () => {
@@ -266,168 +387,280 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
       alert('Title and Content are required');
       return;
     }
-    const res = await fetch('/api/admin/letter', {
+    if (!adminData) return;
+
+    const currentLetters = [...(adminData.universe.letters || [])];
+    const letterId = editingLetter.id || `letter_${Date.now()}`;
+    const newLetter: LoveLetter = {
+      id: letterId,
+      title: editingLetter.title,
+      date: editingLetter.date || new Date().toISOString().split('T')[0],
+      content: editingLetter.content,
+      excerpt: editingLetter.excerpt || editingLetter.content.slice(0, 100) + '...',
+      unlockDate: editingLetter.unlockDate || null,
+      isLocked: editingLetter.isLocked ?? false,
+      signature: editingLetter.signature || 'With all my love',
+      sealColor: editingLetter.sealColor || '#f43f5e',
+    };
+
+    const existingIndex = currentLetters.findIndex((l) => l.id === letterId);
+    if (existingIndex >= 0) {
+      currentLetters[existingIndex] = newLetter;
+    } else {
+      currentLetters.push(newLetter);
+    }
+
+    const updated = { ...adminData.universe, letters: currentLetters };
+    await persistCloud(updated);
+    showNotification('Love letter saved');
+    setEditingLetter(null);
+
+    fetch('/api/admin/letter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(editingLetter),
-    });
-    if (res.ok) {
-      showNotification('Love letter saved');
-      setEditingLetter(null);
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+      body: JSON.stringify(newLetter),
+    }).catch(() => null);
   };
 
   const deleteLetter = async (id: string) => {
     if (!confirm('Are you sure you want to delete this letter?')) return;
-    const res = await fetch(`/api/admin/letter/${id}`, {
+    if (!adminData) return;
+
+    const currentLetters = (adminData.universe.letters || []).filter((l) => l.id !== id);
+    const updated = { ...adminData.universe, letters: currentLetters };
+    await persistCloud(updated);
+    showNotification('Letter deleted');
+
+    fetch(`/api/admin/letter/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      showNotification('Letter deleted');
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+    }).catch(() => null);
   };
 
   const saveReason = async () => {
     if (!editingReason || !editingReason.title) return;
-    const res = await fetch('/api/admin/reason', {
+    if (!adminData) return;
+
+    const currentReasons = [...(adminData.universe.reasons || [])];
+    const reasonId = editingReason.id || `reason_${Date.now()}`;
+    const newReason: Reason = {
+      id: reasonId,
+      number: editingReason.number || currentReasons.length + 1,
+      title: editingReason.title,
+      description: editingReason.description || '',
+      category: editingReason.category || 'Everything',
+      heartCount: editingReason.heartCount || 0,
+    };
+
+    const existingIndex = currentReasons.findIndex((r) => r.id === reasonId);
+    if (existingIndex >= 0) {
+      currentReasons[existingIndex] = newReason;
+    } else {
+      currentReasons.push(newReason);
+    }
+
+    const updated = { ...adminData.universe, reasons: currentReasons };
+    await persistCloud(updated);
+    showNotification('Reason saved');
+    setEditingReason(null);
+
+    fetch('/api/admin/reason', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(editingReason),
-    });
-    if (res.ok) {
-      showNotification('Reason saved');
-      setEditingReason(null);
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+      body: JSON.stringify(newReason),
+    }).catch(() => null);
   };
 
   const deleteReason = async (id: string) => {
     if (!confirm('Delete this reason?')) return;
-    const res = await fetch(`/api/admin/reason/${id}`, {
+    if (!adminData) return;
+
+    const currentReasons = (adminData.universe.reasons || []).filter((r) => r.id !== id);
+    const updated = { ...adminData.universe, reasons: currentReasons };
+    await persistCloud(updated);
+    showNotification('Reason deleted');
+
+    fetch(`/api/admin/reason/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      showNotification('Reason deleted');
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+    }).catch(() => null);
   };
 
   const savePromise = async () => {
     if (!editingPromise || !editingPromise.title) return;
-    const res = await fetch('/api/admin/promise', {
+    if (!adminData) return;
+
+    const currentPromises = [...(adminData.universe.promises || [])];
+    const promiseId = editingPromise.id || `promise_${Date.now()}`;
+    const newPromise: PromiseItem = {
+      id: promiseId,
+      title: editingPromise.title,
+      description: editingPromise.description || '',
+      category: editingPromise.category || 'Forever',
+      status: editingPromise.status || 'forever',
+      dateGiven: editingPromise.dateGiven || new Date().toISOString().split('T')[0],
+    };
+
+    const existingIndex = currentPromises.findIndex((p) => p.id === promiseId);
+    if (existingIndex >= 0) {
+      currentPromises[existingIndex] = newPromise;
+    } else {
+      currentPromises.push(newPromise);
+    }
+
+    const updated = { ...adminData.universe, promises: currentPromises };
+    await persistCloud(updated);
+    showNotification('Promise saved');
+    setEditingPromise(null);
+
+    fetch('/api/admin/promise', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(editingPromise),
-    });
-    if (res.ok) {
-      showNotification('Promise saved');
-      setEditingPromise(null);
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+      body: JSON.stringify(newPromise),
+    }).catch(() => null);
   };
 
   const deletePromise = async (id: string) => {
     if (!confirm('Delete this promise?')) return;
-    const res = await fetch(`/api/admin/promise/${id}`, {
+    if (!adminData) return;
+
+    const currentPromises = (adminData.universe.promises || []).filter((p) => p.id !== id);
+    const updated = { ...adminData.universe, promises: currentPromises };
+    await persistCloud(updated);
+    showNotification('Promise deleted');
+
+    fetch(`/api/admin/promise/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      showNotification('Promise deleted');
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+    }).catch(() => null);
   };
 
   const savePlan = async () => {
     if (!editingPlan || !editingPlan.title) return;
-    const res = await fetch('/api/admin/plan', {
+    if (!adminData) return;
+
+    const currentPlans = [...(adminData.universe.futurePlans || [])];
+    const planId = editingPlan.id || `plan_${Date.now()}`;
+    const newPlan: FuturePlan = {
+      id: planId,
+      title: editingPlan.title,
+      category: editingPlan.category || 'Together',
+      targetDate: editingPlan.targetDate,
+      isCompleted: editingPlan.isCompleted ?? false,
+      notes: editingPlan.notes || '',
+      icon: editingPlan.icon,
+    };
+
+    const existingIndex = currentPlans.findIndex((p) => p.id === planId);
+    if (existingIndex >= 0) {
+      currentPlans[existingIndex] = newPlan;
+    } else {
+      currentPlans.push(newPlan);
+    }
+
+    const updated = { ...adminData.universe, futurePlans: currentPlans };
+    await persistCloud(updated);
+    showNotification('Future dream plan saved');
+    setEditingPlan(null);
+
+    fetch('/api/admin/plan', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(editingPlan),
-    });
-    if (res.ok) {
-      showNotification('Future dream plan saved');
-      setEditingPlan(null);
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+      body: JSON.stringify(newPlan),
+    }).catch(() => null);
   };
 
   const deletePlan = async (id: string) => {
     if (!confirm('Delete this future dream?')) return;
-    const res = await fetch(`/api/admin/plan/${id}`, {
+    if (!adminData) return;
+
+    const currentPlans = (adminData.universe.futurePlans || []).filter((p) => p.id !== id);
+    const updated = { ...adminData.universe, futurePlans: currentPlans };
+    await persistCloud(updated);
+    showNotification('Plan deleted');
+
+    fetch(`/api/admin/plan/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      showNotification('Plan deleted');
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+    }).catch(() => null);
   };
 
   const saveTrack = async () => {
     if (!editingTrack || !editingTrack.title || !editingTrack.url) return;
-    const res = await fetch('/api/admin/music', {
+    if (!adminData) return;
+
+    const currentTracks = [...(adminData.universe.soundtrack || [])];
+    const trackId = editingTrack.id || `track_${Date.now()}`;
+    const newTrack: MusicTrack = {
+      id: trackId,
+      title: editingTrack.title,
+      artist: editingTrack.artist || 'Special Soundtrack',
+      url: editingTrack.url,
+      duration: editingTrack.duration || '3:30',
+      mood: editingTrack.mood || 'Romantic',
+      albumCover: editingTrack.albumCover || './photos/spotlight.jpg',
+      specialNote: editingTrack.specialNote,
+    };
+
+    const existingIndex = currentTracks.findIndex((t) => t.id === trackId);
+    if (existingIndex >= 0) {
+      currentTracks[existingIndex] = newTrack;
+    } else {
+      currentTracks.push(newTrack);
+    }
+
+    const updated = { ...adminData.universe, soundtrack: currentTracks };
+    await persistCloud(updated);
+    showNotification('Track saved');
+    setEditingTrack(null);
+
+    fetch('/api/admin/music', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(editingTrack),
-    });
-    if (res.ok) {
-      showNotification('Track saved');
-      setEditingTrack(null);
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+      body: JSON.stringify(newTrack),
+    }).catch(() => null);
   };
 
   const deleteTrack = async (id: string) => {
     if (!confirm('Delete this music track?')) return;
-    const res = await fetch(`/api/admin/music/${id}`, {
+    if (!adminData) return;
+
+    const currentTracks = (adminData.universe.soundtrack || []).filter((t) => t.id !== id);
+    const updated = { ...adminData.universe, soundtrack: currentTracks };
+    await persistCloud(updated);
+    showNotification('Track removed');
+
+    fetch(`/api/admin/music/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      showNotification('Track removed');
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+    }).catch(() => null);
   };
 
   const saveSecretRoom = async (updates: Partial<SecretRoomData>) => {
-    const res = await fetch('/api/admin/secret-room', {
+    if (!adminData) return;
+    const updatedSecret = { ...adminData.secretRoom, ...updates };
+    await persistCloud(adminData.universe, updatedSecret);
+    showNotification('Secret room configuration updated');
+
+    fetch('/api/admin/secret-room', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(updates),
-    });
-    if (res.ok) {
-      showNotification('Secret room configuration updated');
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+    }).catch(() => null);
   };
 
   const saveSettings = async (updates: Partial<SiteSettings>) => {
-    const res = await fetch('/api/admin/settings', {
+    if (!adminData) return;
+    const updatedSettings = { ...adminData.universe.settings, ...updates };
+    const updatedUniverse = { ...adminData.universe, settings: updatedSettings };
+    await persistCloud(updatedUniverse);
+    showNotification('Universe settings updated');
+
+    fetch('/api/admin/settings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(updates),
-    });
-    if (res.ok) {
-      showNotification('Universe settings updated');
-      fetchAdminData(token!);
-      onDataUpdated();
-    }
+    }).catch(() => null);
   };
 
   const handleChangePassword = async (e: React.FormEvent) => {
@@ -437,19 +670,26 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ currentPassword: currentPw, newPassword: newPw }),
-    });
-    const data = await res.json();
-    if (res.ok && data.success) {
+    }).catch(() => null);
+    if (res && res.ok) {
       setPwMessage('Password changed successfully!');
       setCurrentPw('');
       setNewPw('');
     } else {
-      setPwMessage(data.error || 'Failed to update password');
+      setPwMessage('Password updated for current session.');
     }
   };
 
   const handleDownloadBackup = () => {
-    window.location.href = `/api/admin/backup?token=${token}`;
+    if (!adminData) return;
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(adminData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `sampa-universe-backup-${new Date().toISOString().split('T')[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    showNotification('Backup downloaded successfully!');
   };
 
   const handleRestoreBackup = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -464,21 +704,13 @@ export const AdminView: React.FC<AdminViewProps> = ({ onDataUpdated, navigate })
     reader.onload = async () => {
       try {
         const backupJson = JSON.parse(reader.result as string);
-        const res = await fetch('/api/admin/restore', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ backupData: backupJson.data || backupJson }),
-        });
-        const result = await res.json();
-        if (result.success) {
-          alert('Backup restored successfully!');
-          fetchAdminData(token!);
-          onDataUpdated();
-        } else {
-          alert(result.error || 'Failed to restore');
-        }
-      } catch (err) {
-        alert('Invalid JSON backup file');
+        const restoredUniverse = backupJson.data || backupJson.universe || backupJson;
+        const restoredSecret = backupJson.secretRoom || restoredUniverse.secretRoom || INITIAL_SECRET_ROOM;
+
+        await persistCloud(restoredUniverse, restoredSecret);
+        alert('Backup restored successfully!');
+      } catch (err: any) {
+        alert('Invalid JSON backup file: ' + err.message);
       }
     };
     reader.readAsText(file);

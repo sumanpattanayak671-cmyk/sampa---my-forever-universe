@@ -6,7 +6,7 @@ export interface Photo {
   caption?: string;
   date: string;
   category: string;
-  album: string;
+  album?: string;
   isFavorite: boolean;
   order: number;
 }

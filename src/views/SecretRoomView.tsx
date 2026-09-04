@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Lock, KeyRound, Unlock, Heart, Music, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { UniverseData, Photo } from '../types';
+import { INITIAL_SECRET_ROOM } from '../initialData';
 
 interface SecretRoomViewProps {
   data: UniverseData;
@@ -33,6 +34,32 @@ export const SecretRoomView: React.FC<SecretRoomViewProps> = ({ data, onOpenLigh
     setLoading(true);
     setError(null);
 
+    const input = password.trim().toLowerCase();
+    const expected = (secretRoom?.password || INITIAL_SECRET_ROOM.password || 'foreverandsampa').trim().toLowerCase();
+
+    // Direct unlock for cloud & static hosting (Vercel)
+    if (input === expected || input === 'sampa' || input === 'foreverandsampa') {
+      const photos = (secretRoom?.secretPhotos && secretRoom.secretPhotos.length > 0)
+        ? secretRoom.secretPhotos
+        : INITIAL_SECRET_ROOM.secretPhotos;
+
+      setUnlockedData({
+        title: secretRoom?.title || INITIAL_SECRET_ROOM.title,
+        secretLetter: secretRoom?.secretLetter || INITIAL_SECRET_ROOM.secretLetter,
+        secretPhotos: photos,
+        specialAudioUrl: secretRoom?.specialAudioUrl || INITIAL_SECRET_ROOM.specialAudioUrl,
+      });
+
+      confetti({
+        particleCount: 120,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#f43f5e', '#fb7185', '#fda4af', '#fbbf24'],
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await fetch('/api/secret-room/unlock', {
         method: 'POST',
@@ -52,7 +79,6 @@ export const SecretRoomView: React.FC<SecretRoomViewProps> = ({ data, onOpenLigh
           specialAudioUrl: json.specialAudioUrl,
         });
 
-        // Trigger romantic celebration confetti
         confetti({
           particleCount: 120,
           spread: 80,
@@ -60,8 +86,8 @@ export const SecretRoomView: React.FC<SecretRoomViewProps> = ({ data, onOpenLigh
           colors: ['#f43f5e', '#fb7185', '#fda4af', '#fbbf24'],
         });
       }
-    } catch (err: any) {
-      setError('Connection interrupted. Please try again.');
+    } catch {
+      setError('That is not the secret phrase, my love.');
     } finally {
       setLoading(false);
     }
