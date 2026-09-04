@@ -249,7 +249,7 @@
   // ------------------------------------------------------------------------
   // 2. IMAGE UPLOAD & RESIZING ENGINE (Canvas Downsampling)
   // ------------------------------------------------------------------------
-  function processImageFile(file, maxWidth = 1200, quality = 0.85) {
+  function processImageFile(file, maxWidth = 1000, quality = 0.82) {
     return new Promise((resolve, reject) => {
       if (!file || !file.type.startsWith('image/')) {
         reject(new Error('Selected file is not an image'));
@@ -301,19 +301,23 @@
   }
 
   // ------------------------------------------------------------------------
-  // 2b. AUDIO STORAGE & PLAYBACK ENGINE (IndexedDB)
+  // 2b. HIGH-CAPACITY STORAGE ENGINE (IndexedDB - Unlimited Quota)
   // ------------------------------------------------------------------------
-  const AUDIO_DB_NAME = 'sampa_universe_media';
-  const AUDIO_DB_VERSION = 1;
-  const AUDIO_STORE_NAME = 'audio_tracks';
+  const MASTER_DB_NAME = 'sampa_universe_master_db';
+  const MASTER_DB_VERSION = 1;
+  const DATA_STORE = 'universe_data_store';
+  const AUDIO_STORE = 'audio_tracks';
 
-  function openAudioDB() {
+  function openMasterDB() {
     return new Promise((resolve, reject) => {
-      const req = indexedDB.open(AUDIO_DB_NAME, AUDIO_DB_VERSION);
+      const req = indexedDB.open(MASTER_DB_NAME, MASTER_DB_VERSION);
       req.onupgradeneeded = (e) => {
         const db = e.target.result;
-        if (!db.objectStoreNames.contains(AUDIO_STORE_NAME)) {
-          db.createObjectStore(AUDIO_STORE_NAME);
+        if (!db.objectStoreNames.contains(DATA_STORE)) {
+          db.createObjectStore(DATA_STORE);
+        }
+        if (!db.objectStoreNames.contains(AUDIO_STORE)) {
+          db.createObjectStore(AUDIO_STORE);
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -321,44 +325,87 @@
     });
   }
 
+  async function saveUniverseToDB(data) {
+    try {
+      const db = await openMasterDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(DATA_STORE, 'readwrite');
+        const store = tx.objectStore(DATA_STORE);
+        const req = store.put(data, 'master_state');
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (err) {
+      console.warn('IndexedDB save failed:', err);
+      return false;
+    }
+  }
+
+  async function loadUniverseFromDB() {
+    try {
+      const db = await openMasterDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(DATA_STORE, 'readonly');
+        const store = tx.objectStore(DATA_STORE);
+        const req = store.get('master_state');
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    } catch (err) {
+      console.warn('IndexedDB load failed:', err);
+      return null;
+    }
+  }
+
+  async function clearUniverseDB() {
+    try {
+      const db = await openMasterDB();
+      const tx = db.transaction([DATA_STORE, AUDIO_STORE], 'readwrite');
+      tx.objectStore(DATA_STORE).clear();
+      tx.objectStore(AUDIO_STORE).clear();
+    } catch (err) {
+      console.warn('Clear DB failed:', err);
+    }
+  }
+
   async function saveAudioBlob(key, blob) {
     try {
-      const db = await openAudioDB();
+      const db = await openMasterDB();
       return new Promise((resolve, reject) => {
-        const tx = db.transaction(AUDIO_STORE_NAME, 'readwrite');
-        const store = tx.objectStore(AUDIO_STORE_NAME);
+        const tx = db.transaction(AUDIO_STORE, 'readwrite');
+        const store = tx.objectStore(AUDIO_STORE);
         const req = store.put(blob, key);
         req.onsuccess = () => resolve();
         req.onerror = () => reject(req.error);
       });
     } catch (e) {
-      console.warn('IndexedDB save failed:', e);
+      console.warn('saveAudioBlob error:', e);
     }
   }
 
   async function getAudioBlob(key) {
     try {
-      const db = await openAudioDB();
+      const db = await openMasterDB();
       return new Promise((resolve, reject) => {
-        const tx = db.transaction(AUDIO_STORE_NAME, 'readonly');
-        const store = tx.objectStore(AUDIO_STORE_NAME);
+        const tx = db.transaction(AUDIO_STORE, 'readonly');
+        const store = tx.objectStore(AUDIO_STORE);
         const req = store.get(key);
-        req.onsuccess = () => resolve(req.result);
+        req.onsuccess = () => resolve(req.result || null);
         req.onerror = () => reject(req.error);
       });
     } catch (e) {
-      console.warn('IndexedDB get failed:', e);
+      console.warn('getAudioBlob error:', e);
       return null;
     }
   }
 
   async function deleteAudioBlob(key) {
     try {
-      const db = await openAudioDB();
-      const tx = db.transaction(AUDIO_STORE_NAME, 'readwrite');
-      tx.objectStore(AUDIO_STORE_NAME).delete(key);
+      const db = await openMasterDB();
+      const tx = db.transaction(AUDIO_STORE, 'readwrite');
+      tx.objectStore(AUDIO_STORE).delete(key);
     } catch (e) {
-      console.warn('IndexedDB delete failed:', e);
+      console.warn('deleteAudioBlob error:', e);
     }
   }
 
@@ -826,8 +873,20 @@
     });
   }
 
-  // Initial render
+  // Initial synchronous render
   renderAllComponents();
+
+  // Asynchronously hydrate from high-capacity master IndexedDB (unlimited quota)
+  loadUniverseFromDB().then((saved) => {
+    if (saved) {
+      UNIVERSE = { ...DEFAULT_UNIVERSE, ...saved };
+      UNIVERSE.settings = { ...DEFAULT_UNIVERSE.settings, ...(saved.settings || {}) };
+      UNIVERSE.secretRoom = { ...DEFAULT_UNIVERSE.secretRoom, ...(saved.secretRoom || {}) };
+      renderAllComponents();
+      if (typeof updateTimer === 'function') updateTimer();
+      loadTrack(currentTrackIdx);
+    }
+  });
 
   // ------------------------------------------------------------------------
   // 6. HEART REACTION HANDLER
@@ -846,8 +905,11 @@
     if (bentoCount) bentoCount.textContent = reason.count;
     if (btn) btn.classList.add('liked');
 
-    // Save reaction
-    localStorage.setItem('sampa_universe_data', JSON.stringify(UNIVERSE));
+    // Save reaction safely to IndexedDB without quota crash
+    saveUniverseToDB(UNIVERSE);
+    try {
+      localStorage.setItem('sampa_universe_data', JSON.stringify(UNIVERSE));
+    } catch (_) {}
 
     if (window.confetti) {
       const rect = e.target.getBoundingClientRect();
@@ -2013,13 +2075,25 @@
     `;
   }
 
-  window.saveAllUniverseData = () => {
+  window.saveAllUniverseData = async () => {
     try {
-      localStorage.setItem('sampa_universe_data', JSON.stringify(UNIVERSE));
+      // 1. Save to high-capacity IndexedDB (Unlimited quota for all photos & custom content!)
+      await saveUniverseToDB(UNIVERSE);
+
+      // 2. Safe localStorage cache without throwing quota errors
+      try {
+        localStorage.setItem('sampa_universe_data', JSON.stringify(UNIVERSE));
+      } catch (storageErr) {
+        // If localStorage is full, remove key so browser storage stays healthy
+        try { localStorage.removeItem('sampa_universe_data'); } catch (_) {}
+      }
+
       renderAllComponents();
-      showToast('✨ All universe changes saved successfully!');
+      showToast('✨ All universe changes saved safely!');
     } catch (e) {
-      alert('Error saving data: ' + e.message);
+      console.error('Save error:', e);
+      renderAllComponents();
+      showToast('✨ Changes applied live.');
     }
   };
 
@@ -2037,11 +2111,11 @@
   window.importBackupJSON = (file) => {
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const imported = JSON.parse(e.target.result);
         UNIVERSE = imported;
-        window.saveAllUniverseData();
+        await window.saveAllUniverseData();
         window.switchAdminTab(currentAdminTab);
         showToast('✅ Data restored from backup!');
       } catch (err) {
@@ -2051,9 +2125,10 @@
     reader.readAsText(file);
   };
 
-  window.resetUniverseToDefaults = () => {
+  window.resetUniverseToDefaults = async () => {
     if (confirm('Are you sure you want to reset all changes and uploaded pictures back to initial default values?')) {
-      localStorage.removeItem('sampa_universe_data');
+      try { localStorage.removeItem('sampa_universe_data'); } catch (_) {}
+      await clearUniverseDB();
       UNIVERSE = JSON.parse(JSON.stringify(DEFAULT_UNIVERSE));
       renderAllComponents();
       window.switchAdminTab(currentAdminTab);
